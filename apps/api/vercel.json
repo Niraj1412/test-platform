@@ -1,5 +1,10 @@
 {
   "version": 2,
+  "functions": {
+    "api/index.js": {
+      "includeFiles": "node_modules/.prisma/**,node_modules/@prisma/client/libquery_engine*,node_modules/@prisma/client/query_engine*"
+    }
+  },
   "routes": [
     { "src": "/(.*)", "dest": "/api/index" }
   ]
