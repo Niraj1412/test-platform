@@ -1,0 +1,224 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  CREATOR
+  TAKER
+}
+
+enum TestStatus {
+  DRAFT
+  PUBLISHED
+  CLOSED
+  ARCHIVED
+}
+
+enum TimingMode {
+  GLOBAL
+  PER_SECTION
+}
+
+enum QuestionType {
+  MCQ_SINGLE
+  MCQ_MULTIPLE
+  TRUE_FALSE
+  SHORT_ANSWER
+  LONG_ANSWER
+  FILL_BLANK
+  MATCHING
+  ORDERING
+  NUMERICAL
+  FILE_UPLOAD
+}
+
+enum AttemptStatus {
+  IN_PROGRESS
+  SUBMITTED
+  GRADING
+  GRADED
+  EXPIRED
+}
+
+enum DifficultyLevel {
+  EASY
+  MEDIUM
+  HARD
+}
+
+model User {
+  id               String   @id @default(uuid())
+  email            String   @unique
+  name             String
+  passwordHash     String
+  role             UserRole @default(TAKER)
+  isEmailVerified  Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  createdTests      Test[]         @relation("CreatorTests")
+  attempts          Attempt[]
+  questionBankItems QuestionBank[]
+  refreshTokens     RefreshToken[]
+  gradedAnswers     Answer[]       @relation("GradedAnswers")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model Test {
+  id                    String     @id @default(uuid())
+  creatorId             String
+  creator               User       @relation("CreatorTests", fields: [creatorId], references: [id])
+  title                 String
+  description           String?
+  instructions          String?
+  status                TestStatus @default(DRAFT)
+  accessCode            String?    @unique
+  accessLink            String?    @unique
+  totalMarks            Int        @default(0)
+  passingScore          Float      @default(40)
+  negativeMarkingGlobal Float      @default(0)
+  timingMode            TimingMode @default(GLOBAL)
+  globalDurationMins    Int?
+  startsAt              DateTime?
+  endsAt                DateTime?
+  allowMultipleAttempts Boolean    @default(false)
+  maxAttempts           Int        @default(1)
+  showResultsInstantly  Boolean    @default(true)
+  showCorrectAnswers    Boolean    @default(false)
+  allowSectionBacktrack Boolean    @default(true)
+  shuffleQuestions      Boolean    @default(false)
+  requireFullscreen     Boolean    @default(false)
+  createdAt             DateTime   @default(now())
+  updatedAt             DateTime   @updatedAt
+
+  sections Section[]
+  attempts Attempt[]
+
+  @@index([creatorId])
+  @@index([accessCode])
+}
+
+model Section {
+  id                   String   @id @default(uuid())
+  testId               String
+  test                 Test     @relation(fields: [testId], references: [id], onDelete: Cascade)
+  title                String
+  instructions         String?
+  order                Int
+  durationMins         Int?
+  totalQuestionsInPool Int      @default(0)
+  questionsToDisplay   Int      @default(0)
+  shuffleQuestions     Boolean  @default(false)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  questions Question[]
+
+  @@index([testId, order])
+}
+
+model Question {
+  id            String          @id @default(uuid())
+  sectionId     String
+  section       Section         @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  type          QuestionType
+  body          String
+  mediaUrl      String?
+  order         Int
+  marks         Float           @default(1)
+  negativeMarks Float           @default(0)
+  difficulty    DifficultyLevel @default(MEDIUM)
+  tags          String[]        @default([])
+  questionData  Json
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  answers     Answer[]
+  bankEntries QuestionBank[]
+
+  @@index([sectionId, order])
+}
+
+model QuestionBank {
+  id           String          @id @default(uuid())
+  creatorId    String
+  creator      User            @relation(fields: [creatorId], references: [id])
+  questionId   String?
+  question     Question?       @relation(fields: [questionId], references: [id])
+  type         QuestionType
+  body         String
+  mediaUrl     String?
+  marks        Float           @default(1)
+  difficulty   DifficultyLevel @default(MEDIUM)
+  tags         String[]        @default([])
+  questionData Json
+  createdAt    DateTime        @default(now())
+
+  @@index([creatorId])
+}
+
+model Attempt {
+  id                String        @id @default(uuid())
+  testId            String
+  test              Test          @relation(fields: [testId], references: [id])
+  takerId           String?
+  taker             User?         @relation(fields: [takerId], references: [id])
+  guestName         String?
+  guestEmail        String?
+  guestSessionId    String?
+  status            AttemptStatus @default(IN_PROGRESS)
+  startedAt         DateTime      @default(now())
+  submittedAt       DateTime?
+  lastSavedAt       DateTime      @default(now())
+  rawScore          Float?
+  totalMarks        Float?
+  percentage        Float?
+  passed            Boolean?
+  assignedQuestions Json          @default("[]")
+  sectionTimings    Json          @default("{}")
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  answers Answer[]
+
+  @@index([testId])
+  @@index([takerId])
+  @@index([guestSessionId])
+}
+
+model Answer {
+  id           String   @id @default(uuid())
+  attemptId    String
+  attempt      Attempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  questionId   String
+  question     Question @relation(fields: [questionId], references: [id])
+  responseData Json
+  isAutoGraded Boolean  @default(false)
+  earnedMarks  Float?
+  isCorrect    Boolean?
+  gradedById   String?
+  grader       User?    @relation("GradedAnswers", fields: [gradedById], references: [id])
+  gradedAt     DateTime?
+  graderNotes  String?
+  isFlagged    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([attemptId, questionId])
+  @@index([attemptId])
+  @@index([questionId])
+}

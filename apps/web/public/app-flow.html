@@ -1,0 +1,2685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuizForge Platform Workflow Visualizer</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Tabler Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  
+  <style>
+    /* Design tokens based on the QuizForge Design System (Material 3 style) */
+    :root {
+      --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+      --font-display: 'Outfit', sans-serif;
+      
+      --background: #faf8ff;
+      --on-background: #191b23;
+      
+      --surface-1: #ffffff;
+      --surface-2: #f3f3fe;
+      --surface-3: #ededf9;
+      
+      --text-primary: #191b23;
+      --text-secondary: #434655;
+      --text-muted: #737686;
+      
+      --border: #c3c6d7;
+      --border-strong: #737686;
+      
+      --fill-accent: #004ac6;
+      --bg-accent: #dbe1ff;
+      --border-accent: #b4c5ff;
+      --text-accent: #003ea8;
+      
+      --bg-success: #e8f5e9;
+      --border-success: #a5d6a7;
+      --text-success: #2e7d32;
+      
+      --bg-warning: #fff8e1;
+      --border-warning: #ffe082;
+      --text-warning: #f57f17;
+      
+      --bg-danger: #ffebee;
+      --border-danger: #ef9a9a;
+      --text-danger: #c62828;
+      
+      --bg-pro: #f3e5f5;
+      --border-pro: #ce93d8;
+      --text-pro: #6a1b9a;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: var(--font-sans);
+      background: var(--background);
+      color: var(--text-primary);
+      min-height: 100vh;
+      padding: 24px;
+    }
+    
+    .root {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 0 40px;
+    }
+
+    /* Header styling */
+    .header-bar {
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 16px;
+    }
+    .brand-title {
+      font-family: var(--font-display);
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--fill-accent);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .section-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .08em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin: 28px 0 10px;
+      padding-left: 2px;
+    }
+    
+    .flow-tabs {
+      display: flex;
+      gap: 4px;
+      border-bottom: 0.5px solid var(--border);
+      margin-bottom: 20px;
+      padding: 4px 0 0;
+    }
+    
+    .tab {
+      padding: 8px 16px;
+      border-radius: 6px 6px 0 0;
+      border: 0.5px solid transparent;
+      border-bottom: none;
+      font-family: var(--font-display);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      color: var(--text-secondary);
+      background: transparent;
+      transition: .15s ease;
+    }
+    
+    .tab.active {
+      background: var(--surface-1);
+      border-color: var(--border);
+      border-bottom-color: var(--surface-1);
+      color: var(--fill-accent);
+      margin-bottom: -1px;
+    }
+    
+    .tab:hover:not(.active) {
+      color: var(--text-primary);
+      background: var(--surface-2);
+    }
+    
+    .panel {
+      display: none;
+      animation: fadeIn 0.25s ease-out;
+    }
+    .panel.active {
+      display: block;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Node styles */
+    .flow {
+      position: relative;
+      padding: 8px 0;
+    }
+    .row {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .row.center {
+      justify-content: center;
+    }
+    .row.spread {
+      justify-content: space-between;
+    }
+    .node {
+      border-radius: 8px;
+      border: 0.5px solid var(--border);
+      background: var(--surface-1);
+      padding: 10px 14px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: .15s ease;
+      min-width: 110px;
+      text-align: center;
+      position: relative;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+    .node:hover {
+      border-color: var(--border-strong);
+      background: var(--surface-2);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 6px rgba(0,0,0,0.06);
+    }
+    .node i {
+      margin-bottom: 4px;
+      display: inline-block;
+    }
+    .node .nt {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 2px;
+    }
+    .node .ns {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+    .node.accent {
+      background: var(--bg-accent);
+      border-color: var(--border-accent);
+    }
+    .node.accent .nt {
+      color: var(--text-accent);
+    }
+    .node.success {
+      background: var(--bg-success);
+      border-color: var(--border-success);
+    }
+    .node.success .nt {
+      color: var(--text-success);
+    }
+    .node.warn {
+      background: var(--bg-warning);
+      border-color: var(--border-warning);
+    }
+    .node.warn .nt {
+      color: var(--text-warning);
+    }
+    .node.danger {
+      background: var(--bg-danger);
+      border-color: var(--border-danger);
+    }
+    .node.danger .nt {
+      color: var(--text-danger);
+    }
+    .node.pro {
+      background: var(--bg-pro);
+      border-color: var(--border-pro);
+    }
+    .node.pro .nt {
+      color: var(--text-pro);
+    }
+    .node.brand {
+      border: 1.5px solid var(--fill-accent);
+      box-shadow: 0 0 0 3px var(--bg-accent);
+    }
+    .node.brand .nt {
+      color: var(--fill-accent);
+      font-size: 12px;
+    }
+
+    .arrow-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 0 2px;
+      margin-top: 4px;
+    }
+    .arr-down {
+      width: 1px;
+      background: var(--border-strong);
+      height: 20px;
+      position: relative;
+    }
+    .arr-down::after {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      left: -3px;
+      width: 0;
+      height: 0;
+      border-left: 3.5px solid transparent;
+      border-right: 3.5px solid transparent;
+      border-top: 6px solid var(--border-strong);
+    }
+    .arr-right {
+      height: 1px;
+      background: var(--border-strong);
+      width: 20px;
+      position: relative;
+      margin: 4px 0;
+    }
+    .arr-right::after {
+      content: '';
+      position: absolute;
+      right: -5px;
+      top: -3px;
+      width: 0;
+      height: 0;
+      border-top: 3.5px solid transparent;
+      border-bottom: 3.5px solid transparent;
+      border-left: 6px solid var(--border-strong);
+    }
+
+    .lane {
+      border: 0.5px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      background: var(--surface-1);
+      margin-bottom: 12px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+    .lane-title {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      margin-bottom: 10px;
+    }
+
+    .connector {
+      border-top: 0.5px dashed var(--border-strong);
+      margin: 16px 0;
+      position: relative;
+    }
+    .connector::before {
+      content: '';
+      position: absolute;
+      top: -4px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--border-strong);
+    }
+
+    /* Grid for categories */
+    .cat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .cat-card {
+      border: 0.5px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      background: var(--surface-1);
+      cursor: pointer;
+      transition: .15s ease;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+    .cat-card:hover {
+      border-color: var(--border-strong);
+      background: var(--surface-2);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 6px rgba(0,0,0,0.06);
+    }
+    .cat-card .cc-icon {
+      font-size: 18px;
+      margin-bottom: 6px;
+      color: var(--text-muted);
+    }
+    .cat-card .cc-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .cat-card .cc-sub {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      line-height: 1.4;
+    }
+    .cat-card.accent {
+      background: var(--bg-accent);
+      border-color: var(--border-accent);
+    }
+    .cat-card.accent .cc-title {
+      color: var(--text-accent);
+    }
+    .cat-card.accent .cc-icon {
+      color: var(--text-accent);
+    }
+    .cat-card.success {
+      background: var(--bg-success);
+      border-color: var(--border-success);
+    }
+    .cat-card.success .cc-title {
+      color: var(--text-success);
+    }
+    .cat-card.success .cc-icon {
+      color: var(--text-success);
+    }
+    .cat-card.warn {
+      background: var(--bg-warning);
+      border-color: var(--border-warning);
+    }
+    .cat-card.warn .cc-title {
+      color: var(--text-warning);
+    }
+    .cat-card.warn .cc-icon {
+      color: var(--text-warning);
+    }
+    .cat-card.pro {
+      background: var(--bg-pro);
+      border-color: var(--border-pro);
+    }
+    .cat-card.pro .cc-title {
+      color: var(--text-pro);
+    }
+    .cat-card.pro .cc-icon {
+      color: var(--text-pro);
+    }
+    .cat-card.danger {
+      background: var(--bg-danger);
+      border-color: var(--border-danger);
+    }
+    .cat-card.danger .cc-title {
+      color: var(--text-danger);
+    }
+    .cat-card.danger .cc-icon {
+      color: var(--text-danger);
+    }
+
+    /* Badge */
+    .badge {
+      display: inline-block;
+      font-size: 9px;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 4px;
+      margin-left: 6px;
+      vertical-align: middle;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .badge.accent {
+      background: var(--bg-accent);
+      color: var(--text-accent);
+    }
+    .badge.success {
+      background: var(--bg-success);
+      color: var(--text-success);
+    }
+    .badge.warn {
+      background: var(--bg-warning);
+      color: var(--text-warning);
+    }
+    .badge.pro {
+      background: var(--bg-pro);
+      color: var(--text-pro);
+    }
+
+    /* Exam pill list */
+    .pill-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .pill {
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      border: 0.5px solid var(--border);
+      background: var(--surface-1);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: .15s ease;
+    }
+    .pill:hover {
+      background: var(--surface-2);
+      border-color: var(--border-strong);
+      color: var(--text-primary);
+    }
+    .pill.accent {
+      background: var(--bg-accent);
+      border-color: var(--border-accent);
+      color: var(--text-accent);
+    }
+    .pill.success {
+      background: var(--bg-success);
+      border-color: var(--border-success);
+      color: var(--text-success);
+    }
+    .pill.warn {
+      background: var(--bg-warning);
+      border-color: var(--border-warning);
+      color: var(--text-warning);
+    }
+    .pill.pro {
+      background: var(--bg-pro);
+      border-color: var(--border-pro);
+      color: var(--text-pro);
+    }
+    .pill.danger {
+      background: var(--bg-danger);
+      border-color: var(--border-danger);
+      color: var(--text-danger);
+    }
+
+    /* Screen mock */
+    .screen-mock {
+      border: 0.5px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface-1);
+      overflow: hidden;
+      margin-bottom: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+    .screen-topbar {
+      height: 36px;
+      background: var(--surface-2);
+      border-bottom: 0.5px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      gap: 6px;
+    }
+    .screen-topbar .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--border-strong);
+    }
+    .screen-body {
+      padding: 16px;
+    }
+
+    /* Step flow */
+    .steps {
+      display: flex;
+      align-items: flex-start;
+      gap: 0;
+      overflow-x: auto;
+      padding: 8px 0;
+    }
+    .step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 90px;
+      max-width: 110px;
+      flex: 1;
+    }
+    .step-circle {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 600;
+      flex-shrink: 0;
+      z-index: 1;
+    }
+    .step-line {
+      flex: 1;
+      height: 1px;
+      background: var(--border-strong);
+      margin-top: 14px;
+      min-width: 16px;
+    }
+    .step-label {
+      font-size: 10px;
+      color: var(--text-secondary);
+      margin-top: 6px;
+      text-align: center;
+      line-height: 1.4;
+    }
+    .step.done .step-circle {
+      background: var(--bg-success);
+      color: var(--text-success);
+      border: 1px solid var(--border-success);
+    }
+    .step.active .step-circle {
+      background: var(--fill-accent);
+      color: white;
+    }
+    .step.pending .step-circle {
+      background: var(--surface-1);
+      border: 0.5px solid var(--border);
+      color: var(--text-muted);
+    }
+
+    /* Decision diamond */
+    .diamond-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 8px 0;
+      justify-content: center;
+    }
+    .branch {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Info tooltip */
+    .info-box {
+      border: 0.5px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface-1);
+      padding: 12px 16px;
+      font-size: 11px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-top: 8px;
+    }
+    .info-box strong {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    /* Wide screen flow */
+    .wflow {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 8px;
+      align-items: center;
+      margin: 8px 0;
+    }
+    .wflow-center {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Sliding Drawer Styles (The missing workflow detail drawer) */
+    .drawer-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(25, 27, 35, 0.4);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .drawer-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    
+    .drawer {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 440px;
+      max-width: 100%;
+      height: 100%;
+      background: var(--surface-1);
+      box-shadow: -8px 0 32px rgba(0, 0, 0, 0.08);
+      border-left: 1px solid var(--border);
+      z-index: 1001;
+      display: flex;
+      flex-direction: column;
+      transform: translateX(100%);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .drawer.active {
+      transform: translateX(0);
+    }
+    
+    .drawer-header {
+      padding: 24px;
+      border-bottom: 1px solid var(--surface-3);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .drawer-title-area {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .drawer-category {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--fill-accent);
+      letter-spacing: 0.08em;
+    }
+    .drawer-title {
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .drawer-close {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-size: 20px;
+      color: var(--text-secondary);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s ease;
+    }
+    .drawer-close:hover {
+      background: var(--surface-2);
+    }
+    
+    .drawer-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--text-secondary);
+    }
+    .drawer-content h5 {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-top: 20px;
+      margin-bottom: 8px;
+    }
+    .drawer-content p {
+      margin-bottom: 12px;
+    }
+    .drawer-content ul {
+      padding-left: 20px;
+      margin-bottom: 16px;
+    }
+    .drawer-content li {
+      margin-bottom: 6px;
+    }
+    
+    .tech-card {
+      margin-top: 16px;
+      border-left: 3px solid var(--fill-accent);
+      background: var(--surface-2);
+      padding: 12px;
+      border-radius: 0 8px 8px 0;
+      border: 1px solid var(--border);
+      border-left: none;
+    }
+    .tech-card h6 {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-primary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 6px;
+    }
+    .tech-card ul {
+      list-style: none;
+      padding: 0;
+      font-size: 12px;
+      margin: 0;
+    }
+    .tech-card li {
+      margin-bottom: 4px;
+    }
+    .tech-card code {
+      background: rgba(25, 27, 35, 0.05);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 11px;
+    }
+    .tech-card a {
+      color: var(--fill-accent);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .tech-card a:hover {
+      text-decoration: underline;
+    }
+
+    .drawer-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--surface-3);
+      background: var(--surface-2);
+    }
+    
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: none;
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: background 0.15s ease, transform 0.1s ease;
+    }
+    .btn-primary {
+      background: var(--fill-accent);
+      color: white;
+    }
+    .btn-primary:hover {
+      background: #003ea8;
+    }
+    .btn-primary:active {
+      transform: scale(0.98);
+    }
+
+    /* Toast notification */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translate(-50%, 100px);
+      background: #191b23;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 40px;
+      font-size: 13px;
+      font-weight: 500;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      z-index: 1002;
+      opacity: 0;
+      pointer-events: none;
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s;
+    }
+    .toast.active {
+      transform: translate(-50%, 0);
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+
+<div class="root">
+  <!-- Header Bar -->
+  <header class="header-bar">
+    <div class="brand-title">
+      <i class="ti ti-layout-grid-add" aria-hidden="true"></i>
+      <span>QuizForge Workflow Map</span>
+    </div>
+    <span style="font-size: 11px; color: var(--text-muted); font-weight: 600;">Interactive App Flow & Curation</span>
+  </header>
+
+  <h2 class="sr-only">QuizForge — complete platform app flow covering all user roles, exam categories, and screen journeys</h2>
+
+  <div class="flow-tabs" role="tablist">
+    <button class="tab active" role="tab" onclick="switchTab('overview')">Platform overview</button>
+    <button class="tab" role="tab" onclick="switchTab('taker')">Taker journey</button>
+    <button class="tab" role="tab" onclick="switchTab('creator')">Creator journey</button>
+    <button class="tab" role="tab" onclick="switchTab('exams')">Exam catalogue</button>
+    <button class="tab" role="tab" onclick="switchTab('admin')">Admin</button>
+  </div>
+
+  <!-- OVERVIEW TAB -->
+  <div id="tab-overview" class="panel active">
+    <div class="section-label">Platform architecture — who does what</div>
+    <div class="row center" style="gap:20px">
+      <div class="node accent brand" onclick="sendPrompt('Explain the Creator role in detail')">
+        <i class="ti ti-pencil" aria-hidden="true" style="font-size:18px;color:var(--text-accent)"></i>
+        <div class="nt" style="margin-top:4px">Creator</div>
+        <div class="ns">Teacher / Examiner</div>
+      </div>
+      <div class="node accent brand" onclick="sendPrompt('Explain the Test Taker role in detail')">
+        <i class="ti ti-user-check" aria-hidden="true" style="font-size:18px;color:var(--text-accent)"></i>
+        <div class="nt" style="margin-top:4px">Test taker</div>
+        <div class="ns">Student / Candidate</div>
+      </div>
+      <div class="node pro" onclick="sendPrompt('Explain the Admin role in detail')">
+        <i class="ti ti-shield-check" aria-hidden="true" style="font-size:18px;color:var(--text-pro)"></i>
+        <div class="nt" style="margin-top:4px">Admin</div>
+        <div class="ns">Platform manager</div>
+      </div>
+    </div>
+
+    <div class="connector"></div>
+    <div class="section-label">Test categories on the platform</div>
+
+    <div class="cat-grid">
+      <div class="cat-card accent" onclick="sendPrompt('Show all engineering entrance exams available on the platform')">
+        <div class="cc-icon"><i class="ti ti-tool" aria-hidden="true"></i></div>
+        <div class="cc-title">Engineering entrance</div>
+        <div class="cc-sub">JEE Main · JEE Advanced · BITSAT · VITEEE</div>
+      </div>
+      <div class="cat-card success" onclick="sendPrompt('Show all medical entrance exams available on the platform')">
+        <div class="cc-icon"><i class="ti ti-stethoscope" aria-hidden="true"></i></div>
+        <div class="cc-title">Medical entrance</div>
+        <div class="cc-sub">NEET UG · AIIMS · JIPMER</div>
+      </div>
+      <div class="cat-card warn" onclick="sendPrompt('Show all government and civil service exams on the platform')">
+        <div class="cc-icon"><i class="ti ti-building-bank" aria-hidden="true"></i></div>
+        <div class="cc-title">Government / Civil services</div>
+        <div class="cc-sub">UPSC · SSC · IBPS · RRB</div>
+      </div>
+      <div class="cat-card pro" onclick="sendPrompt('Show all management and MBA entrance exams on the platform')">
+        <div class="cc-icon"><i class="ti ti-chart-bar" aria-hidden="true"></i></div>
+        <div class="cc-title">Management entrance</div>
+        <div class="cc-sub">CAT · MAT · SNAP · XAT · NMAT</div>
+      </div>
+      <div class="cat-card danger" onclick="sendPrompt('Show all law and other professional entrance exams on the platform')">
+        <div class="cc-icon"><i class="ti ti-gavel" aria-hidden="true"></i></div>
+        <div class="cc-title">Law / Other professional</div>
+        <div class="cc-sub">CLAT · AILET · NDA · CDS</div>
+      </div>
+      <div class="cat-card" onclick="sendPrompt('Show all school board and Olympiad exams on the platform')">
+        <div class="cc-icon"><i class="ti ti-school" aria-hidden="true"></i></div>
+        <div class="cc-title">School &amp; Olympiads</div>
+        <div class="cc-sub">CBSE · ICSE · State boards · NSO · IMO</div>
+      </div>
+    </div>
+
+    <div class="connector"></div>
+    <div class="section-label">Core product surfaces</div>
+    <div class="row" style="gap:8px">
+      <div class="node" style="flex:1" onclick="sendPrompt('Describe the Home and Discovery screen in detail')">
+        <i class="ti ti-home" aria-hidden="true" style="color:var(--text-muted)"></i>
+        <div class="nt">Home &amp; discovery</div>
+        <div class="ns">Browse, search, trending</div>
+      </div>
+      <div class="node" style="flex:1" onclick="sendPrompt('Describe the Test builder in detail')">
+        <i class="ti ti-layout-2" aria-hidden="true" style="color:var(--text-muted)"></i>
+        <div class="nt">Test builder</div>
+        <div class="ns">Create + configure tests</div>
+      </div>
+      <div class="node" style="flex:1" onclick="sendPrompt('Describe the Mock test interface in detail')">
+        <i class="ti ti-pencil-check" aria-hidden="true" style="color:var(--text-muted)"></i>
+        <div class="nt">Mock test interface</div>
+        <div class="ns">Full exam simulation</div>
+      </div>
+      <div class="node" style="flex:1" onclick="sendPrompt('Describe the Result and analytics screen in detail')">
+        <i class="ti ti-chart-dots" aria-hidden="true" style="color:var(--text-muted)"></i>
+        <div class="nt">Results &amp; analytics</div>
+        <div class="ns">Scores, insights, rank</div>
+      </div>
+      <div class="node" style="flex:1" onclick="sendPrompt('Describe the Admin panel in detail')">
+        <i class="ti ti-settings" aria-hidden="true" style="color:var(--text-muted)"></i>
+        <div class="nt">Admin panel</div>
+        <div class="ns">Users, tests, config</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAKER JOURNEY TAB -->
+  <div id="tab-taker" class="panel">
+    <div class="section-label">Entry points</div>
+    <div class="row center" style="gap:8px">
+      <div class="node accent" onclick="sendPrompt('How does the direct URL or QR code entry work?')"><div class="nt">Direct URL / QR</div><div class="ns">Shared by creator</div></div>
+      <div class="node accent" onclick="sendPrompt('How does the access code entry work?')"><div class="nt">Access code</div><div class="ns">6-char code</div></div>
+      <div class="node accent" onclick="sendPrompt('How does discovery via exam catalogue work?')"><div class="nt">Exam catalogue</div><div class="ns">Browse &amp; enrol</div></div>
+      <div class="node accent" onclick="sendPrompt('How does email invitation entry work?')"><div class="nt">Email invite</div><div class="ns">Institutional invite</div></div>
+    </div>
+
+    <div class="section-label" style="margin-top:20px">Authentication gate</div>
+    <div class="diamond-row">
+      <div class="branch">
+        <div class="node success" style="min-width:90px" onclick="sendPrompt('What happens when a registered user logs in?')"><div class="nt">Registered user</div><div class="ns">Email / Google login</div></div>
+      </div>
+      <div style="font-size:10px;color:var(--text-muted)">or</div>
+      <div class="branch">
+        <div class="node warn" style="min-width:90px" onclick="sendPrompt('How does guest mode work for test takers?')"><div class="nt">Guest mode</div><div class="ns">Name + email only</div></div>
+      </div>
+      <div style="font-size:10px;color:var(--text-muted)">or</div>
+      <div class="branch">
+        <div class="node" style="min-width:90px" onclick="sendPrompt('How does SSO login work for institution students?')"><div class="nt">SSO / Institution</div><div class="ns">Organisation login</div></div>
+      </div>
+    </div>
+
+    <div class="section-label" style="margin-top:20px">Pre-test gate screen</div>
+    <div class="lane">
+      <div class="lane-title">Gate screen — what the taker sees</div>
+      <div class="row" style="gap:8px;flex-wrap:wrap">
+        <div class="node" style="min-width:100px" onclick="sendPrompt('What information is shown in the test overview card?')"><div class="nt">Test overview card</div><div class="ns">Name, creator, sections</div></div>
+        <div class="node" style="min-width:100px" onclick="sendPrompt('What timing info is shown on the gate screen?')"><div class="nt">Timing info</div><div class="ns">Duration, window</div></div>
+        <div class="node" style="min-width:100px" onclick="sendPrompt('What marking scheme info is shown on the gate screen?')"><div class="nt">Marking scheme</div><div class="ns">Marks, cut-off</div></div>
+        <div class="node" style="min-width:100px" onclick="sendPrompt('What instructions are shown on the gate screen?')"><div class="nt">Instructions</div><div class="ns">Rules, guidelines</div></div>
+        <div class="node success" style="min-width:100px" onclick="sendPrompt('What does the Start Test button do?')"><div class="nt">Start test CTA</div><div class="ns">Launches interface</div></div>
+      </div>
+    </div>
+
+    <div class="section-label" style="margin-top:4px">Test-taking interface</div>
+    <div class="screen-mock">
+      <div class="screen-topbar">
+        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        <span style="font-size:10px;color:var(--text-muted);margin-left:6px">Mock test interface</span>
+      </div>
+      <div class="screen-body">
+        <div style="display:grid;grid-template-columns:1fr 180px;gap:10px">
+          <div>
+            <div style="font-size:10px;font-weight:500;color:var(--text-muted);margin-bottom:6px">QUESTION AREA</div>
+            <div class="row" style="gap:6px;margin-bottom:8px">
+              <div class="node" style="padding:6px 10px;min-width:0" onclick="sendPrompt('How does section navigation work mid-test?')"><div class="nt" style="font-size:10px">Section 2 of 3</div></div>
+              <div class="node warn" style="padding:6px 10px;min-width:0"><div class="nt" style="font-size:10px">⏱ 28:45</div></div>
+              <div class="node danger" style="padding:6px 10px;min-width:0" onclick="sendPrompt('How does the submit button work during a test?')"><div class="nt" style="font-size:10px">Submit</div></div>
+            </div>
+            <div style="border:0.5px solid var(--border);border-radius:6px;padding:8px;background:var(--surface-2);font-size:10px;color:var(--text-secondary);min-height:70px;margin-bottom:6px">
+              Q5 of 20 &nbsp;<span style="font-size:9px;color:var(--text-muted)">[MCQ Single]</span><br><br>
+              <strong style="color:var(--text-primary);font-size:10px">Which of the following is the correct formula for kinetic energy?</strong>
+            </div>
+            <div class="row" style="gap:4px">
+              <div class="node" style="padding:5px 8px;min-width:0;flex:1" onclick="sendPrompt('How do MCQ options work in the test interface?')"><div class="ns">A. mv</div></div>
+              <div class="node accent" style="padding:5px 8px;min-width:0;flex:1"><div class="ns" style="color:var(--text-accent)">B. ½mv² ✓</div></div>
+              <div class="node" style="padding:5px 8px;min-width:0;flex:1"><div class="ns">C. mv²</div></div>
+              <div class="node" style="padding:5px 8px;min-width:0;flex:1"><div class="ns">D. 2mv</div></div>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:10px;font-weight:500;color:var(--text-muted);margin-bottom:6px">NAVIGATOR</div>
+            <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:3px;margin-bottom:8px">
+              <div style="background:var(--fill-accent);color:white;border-radius:4px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:9px">1</div>
+              <div style="background:var(--fill-accent);color:white;border-radius:4px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:9px">2</div>
+              <div style="background:var(--fill-accent);color:white;border-radius:4px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:9px">3</div>
+              <div style="background:var(--bg-warning);border:0.5px solid var(--border-warning);border-radius:4px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--text-warning)">4</div>
+              <div style="background:var(--fill-accent);border:2px solid #1d4ed8;border-radius:4px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:9px;color:white">5</div>
+              <div style="background:var(--surface-2);border:0.5px solid var(--border);border-radius:4px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--text-muted)">6</div>
+              <div style="background:var(--surface-2);border:0.5px solid var(--border);border-radius:4px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--text-muted)">7</div>
+            </div>
+            <div style="font-size:9px;color:var(--text-muted);line-height:1.8">
+              <span style="display:inline-block;width:8px;height:8px;background:var(--fill-accent);border-radius:1px;margin-right:3px"></span>Answered<br>
+              <span style="display:inline-block;width:8px;height:8px;background:var(--bg-warning);border:0.5px solid var(--border-warning);border-radius:1px;margin-right:3px"></span>Flagged<br>
+              <span style="display:inline-block;width:8px;height:8px;background:var(--surface-2);border:0.5px solid var(--border);border-radius:1px;margin-right:3px"></span>Not visited
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-label">Question types the taker encounters</div>
+    <div class="pill-list">
+      <span class="pill accent" onclick="sendPrompt('How does MCQ single render for the taker?')">MCQ single</span>
+      <span class="pill accent" onclick="sendPrompt('How does MCQ multiple render for the taker?')">MCQ multiple</span>
+      <span class="pill success" onclick="sendPrompt('How does True / False render for the taker?')">True / False</span>
+      <span class="pill success" onclick="sendPrompt('How does Fill in the Blank render for the taker?')">Fill in blank</span>
+      <span class="pill warn" onclick="sendPrompt('How does Matching render for the taker?')">Matching</span>
+      <span class="pill warn" onclick="sendPrompt('How does Ordering / Sequence render for the taker?')">Ordering</span>
+      <span class="pill pro" onclick="sendPrompt('How does Numerical input render for the taker?')">Numerical</span>
+      <span class="pill pro" onclick="sendPrompt('How does Short Answer render for the taker?')">Short answer</span>
+      <span class="pill danger" onclick="sendPrompt('How does Long Answer / Essay render for the taker?')">Essay</span>
+      <span class="pill danger" onclick="sendPrompt('How does File Upload render for the taker?')">File upload</span>
+    </div>
+
+    <div class="section-label" style="margin-top:20px">Post-submission flow</div>
+    <div class="row center" style="gap:8px;flex-wrap:wrap">
+      <div class="node" onclick="sendPrompt('What is the auto-submit flow on timer expiry?')"><div class="nt">Timer expires</div><div class="ns">Auto-submit triggered</div></div>
+      <div style="font-size:10px;color:var(--text-muted)">or</div>
+      <div class="node" onclick="sendPrompt('What happens when a taker clicks Submit manually?')"><div class="nt">Manual submit</div><div class="ns">Confirmation modal</div></div>
+    </div>
+    <div style="height:10px"></div>
+    <div class="row center" style="gap:8px;flex-wrap:wrap">
+      <div class="node success" onclick="sendPrompt('Describe the instant results screen in detail')"><div class="nt">Instant results screen</div><div class="ns">Score, %, pass/fail, sections</div></div>
+      <div style="font-size:10px;color:var(--text-muted)">or</div>
+      <div class="node warn" onclick="sendPrompt('What does the taker see when results are pending?')"><div class="nt">Results pending</div><div class="ns">Awaiting creator release</div></div>
+    </div>
+    <div style="height:10px"></div>
+    <div class="row center" style="gap:8px;flex-wrap:wrap">
+      <div class="node" onclick="sendPrompt('Describe the answer sheet review screen')"><div class="nt">Answer sheet review</div><div class="ns">If creator enabled</div></div>
+      <div class="node" onclick="sendPrompt('Describe the performance analysis screen for the taker')"><div class="nt">Performance analysis</div><div class="ns">Section-wise, topic-wise</div></div>
+      <div class="node" onclick="sendPrompt('How does the All India Rank feature work?')"><div class="nt">All India Rank</div><div class="ns">vs other takers</div></div>
+      <div class="node" onclick="sendPrompt('How does the retake test feature work?')"><div class="nt">Retake</div><div class="ns">If multiple attempts</div></div>
+    </div>
+  </div>
+
+  <!-- CREATOR JOURNEY TAB -->
+  <div id="tab-creator" class="panel">
+    <div class="section-label">Creator onboarding</div>
+    <div class="steps" role="list">
+      <div class="step done" role="listitem"><div class="step-circle"><i class="ti ti-check" style="font-size:11px" aria-hidden="true"></i></div><div class="step-label">Register &amp; verify email</div></div>
+      <div class="step-line"></div>
+      <div class="step done" role="listitem"><div class="step-circle"><i class="ti ti-check" style="font-size:11px" aria-hidden="true"></i></div><div class="step-label">Set up profile &amp; institution</div></div>
+      <div class="step-line"></div>
+      <div class="step active" role="listitem"><div class="step-circle">3</div><div class="step-label">Creator dashboard</div></div>
+      <div class="step-line"></div>
+      <div class="step pending" role="listitem"><div class="step-circle">4</div><div class="step-label">Create first test</div></div>
+      <div class="step-line"></div>
+      <div class="step pending" role="listitem"><div class="step-circle">5</div><div class="step-label">Publish &amp; share</div></div>
+      <div class="step-line"></div>
+      <div class="step pending" role="listitem"><div class="step-circle">6</div><div class="step-label">Review results</div></div>
+    </div>
+
+    <div class="section-label" style="margin-top:20px">Creator dashboard</div>
+    <div class="row" style="gap:8px;flex-wrap:wrap">
+      <div class="node" style="flex:1" onclick="sendPrompt('Describe the My Tests section on the creator dashboard')"><div class="nt">My tests</div><div class="ns">Draft · Published · Closed</div></div>
+      <div class="node" style="flex:1" onclick="sendPrompt('Describe the Question Bank on the creator dashboard')"><div class="nt">Question bank</div><div class="ns">Saved reusable Qs</div></div>
+      <div class="node" style="flex:1" onclick="sendPrompt('Describe the Results and analytics section on the creator dashboard')"><div class="nt">Results &amp; analytics</div><div class="ns">All attempts overview</div></div>
+      <div class="node" style="flex:1" onclick="sendPrompt('Describe the Grading queue on the creator dashboard')"><div class="nt">Grading queue</div><div class="ns">Pending manual reviews</div></div>
+    </div>
+
+    <div class="section-label" style="margin-top:8px">Test builder — step by step</div>
+
+    <div class="lane">
+      <div class="lane-title">Step 1 — Test configuration</div>
+      <div class="row" style="gap:6px;flex-wrap:wrap">
+        <div class="node" style="min-width:90px" onclick="sendPrompt('What fields are in the test configuration step?')"><div class="nt">Title + description</div></div>
+        <div class="node" style="min-width:90px" onclick="sendPrompt('How does the timing setup work in the test builder?')"><div class="nt">Timing mode</div><div class="ns">Global or per-section</div></div>
+        <div class="node" style="min-width:90px" onclick="sendPrompt('How does the test window configuration work?')"><div class="nt">Test window</div><div class="ns">Start / end datetime</div></div>
+        <div class="node" style="min-width:90px" onclick="sendPrompt('How does pass/fail and scoring configuration work?')"><div class="nt">Scoring &amp; cut-off</div><div class="ns">Pass %, neg marking</div></div>
+        <div class="node" style="min-width:90px" onclick="sendPrompt('What behaviour toggles are available in test configuration?')"><div class="nt">Behaviour toggles</div><div class="ns">Shuffle, backtrack…</div></div>
+      </div>
+    </div>
+
+    <div class="lane">
+      <div class="lane-title">Step 2 — Section builder</div>
+      <div class="row" style="gap:6px;flex-wrap:wrap">
+        <div class="node accent" style="min-width:90px" onclick="sendPrompt('How do you add a new section in the test builder?')"><div class="nt">+ Add section</div></div>
+        <div class="node" style="min-width:90px" onclick="sendPrompt('How does section drag-to-reorder work?')"><div class="nt">Drag to reorder</div></div>
+        <div class="node" style="min-width:90px" onclick="sendPrompt('How does per-section timing work?')"><div class="nt">Section timer</div><div class="ns">If per-section mode</div></div>
+        <div class="node" style="min-width:90px" onclick="sendPrompt('What is the question pool feature in sections?')"><div class="nt">Question pool</div><div class="ns">Show N of M randomly</div></div>
+        <div class="node" style="min-width:90px" onclick="sendPrompt('How does section instructions setup work?')"><div class="nt">Section instructions</div></div>
+      </div>
+    </div>
+
+    <div class="lane">
+      <div class="lane-title">Step 3 — Question editor (10 types)</div>
+      <div class="pill-list">
+        <span class="pill accent" onclick="sendPrompt('How does the MCQ Single question editor work?')">MCQ single</span>
+        <span class="pill accent" onclick="sendPrompt('How does the MCQ Multiple question editor work?')">MCQ multiple</span>
+        <span class="pill success" onclick="sendPrompt('How does the True / False question editor work?')">True / False</span>
+        <span class="pill success" onclick="sendPrompt('How does the Fill in the Blank question editor work?')">Fill in blank</span>
+        <span class="pill warn" onclick="sendPrompt('How does the Matching question editor work?')">Matching</span>
+        <span class="pill warn" onclick="sendPrompt('How does the Ordering question editor work?')">Ordering</span>
+        <span class="pill pro" onclick="sendPrompt('How does the Numerical question editor work?')">Numerical</span>
+        <span class="pill pro" onclick="sendPrompt('How does the Short Answer question editor work?')">Short answer</span>
+        <span class="pill danger" onclick="sendPrompt('How does the Long Answer / Essay question editor work?')">Essay</span>
+        <span class="pill danger" onclick="sendPrompt('How does the File Upload question editor work?')">File upload</span>
+      </div>
+      <div class="info-box" style="margin-top:10px">
+        Each question has: <strong>body (rich text + image)</strong> · <strong>marks</strong> · <strong>negative marks</strong> · <strong>difficulty tag</strong> · <strong>topic tag</strong> · optional <strong>save to bank</strong>
+      </div>
+    </div>
+
+    <div class="lane">
+      <div class="lane-title">Step 4 — Publish &amp; distribute</div>
+      <div class="row" style="gap:6px;flex-wrap:wrap">
+        <div class="node" style="min-width:90px" onclick="sendPrompt('What does the pre-publish checklist validate?')"><div class="nt">Pre-publish checklist</div></div>
+        <div class="node success" style="min-width:90px" onclick="sendPrompt('How does publishing a test work?')"><div class="nt">Confirm &amp; publish</div></div>
+        <div class="node" style="min-width:90px" onclick="sendPrompt('How does the access code sharing work?')"><div class="nt">Share via code</div><div class="ns">6-char code</div></div>
+        <div class="node" style="min-width:90px" onclick="sendPrompt('How does direct link sharing work?')"><div class="nt">Share via link</div></div>
+        <div class="node" style="min-width:90px" onclick="sendPrompt('How does email invite distribution work?')"><div class="nt">Email invites</div><div class="ns">Bulk or individual</div></div>
+        <div class="node" style="min-width:90px" onclick="sendPrompt('How does listing a test on the exam catalogue work?')"><div class="nt">List on catalogue</div><div class="ns">Public / institution</div></div>
+      </div>
+    </div>
+
+    <div class="section-label">Results &amp; grading flow</div>
+    <div class="row" style="gap:8px;flex-wrap:wrap">
+      <div class="node" style="flex:1" onclick="sendPrompt('Describe the results dashboard for creators')"><div class="nt">Results dashboard</div><div class="ns">Avg score, pass rate</div></div>
+      <div class="node" style="flex:1" onclick="sendPrompt('Describe the attempt detail view for creators')"><div class="nt">Per-taker view</div><div class="ns">Full answer sheet</div></div>
+      <div class="node warn" style="flex:1" onclick="sendPrompt('Describe the manual grading interface for subjective answers')"><div class="nt">Manual grading</div><div class="ns">Essay, short answer, upload</div></div>
+      <div class="node" style="flex:1" onclick="sendPrompt('Describe the analytics features for creators')"><div class="nt">Analytics</div><div class="ns">Q-wise accuracy, time</div></div>
+      <div class="node success" style="flex:1" onclick="sendPrompt('How does CSV export of results work?')"><div class="nt">Export CSV</div></div>
+    </div>
+  </div>
+
+  <!-- EXAM CATALOGUE TAB -->
+  <div id="tab-exams" class="panel">
+    <div class="section-label">Engineering entrance exams <span class="badge accent">JEE, BITSAT, VITEEE…</span></div>
+    <div class="cat-grid">
+      <div class="cat-card accent" onclick="sendPrompt('Show the JEE Main mock test structure and sections')">
+        <div class="cc-title">JEE Main</div>
+        <div class="cc-sub">Physics · Chemistry · Maths<br>3 hrs · 90 Qs · 300 marks</div>
+      </div>
+      <div class="cat-card accent" onclick="sendPrompt('Show the JEE Advanced mock test structure and sections')">
+        <div class="cc-title">JEE Advanced</div>
+        <div class="cc-sub">Paper 1 + Paper 2<br>3 hrs each · Multi-type Qs</div>
+      </div>
+      <div class="cat-card accent" onclick="sendPrompt('Show the BITSAT mock test structure and sections')">
+        <div class="cc-title">BITSAT</div>
+        <div class="cc-sub">PCM + English + Logic<br>3 hrs · 150 Qs</div>
+      </div>
+      <div class="cat-card accent" onclick="sendPrompt('Show the VITEEE mock test structure and sections')">
+        <div class="cc-title">VITEEE</div>
+        <div class="cc-sub">PCM/PCB + Aptitude + English<br>2.5 hrs · 125 Qs</div>
+      </div>
+    </div>
+
+    <div class="section-label">Medical entrance exams <span class="badge success">NEET, AIIMS…</span></div>
+    <div class="cat-grid">
+      <div class="cat-card success" onclick="sendPrompt('Show the NEET UG mock test structure and sections')">
+        <div class="cc-title">NEET UG</div>
+        <div class="cc-sub">Physics · Chemistry · Biology<br>3 hrs 20 min · 200 Qs · 720 marks</div>
+      </div>
+      <div class="cat-card success" onclick="sendPrompt('Show the AIIMS MBBS mock test structure')">
+        <div class="cc-title">AIIMS MBBS</div>
+        <div class="cc-sub">PCB + GK + Aptitude<br>3.5 hrs · 200 Qs</div>
+      </div>
+      <div class="cat-card success" onclick="sendPrompt('Show the JIPMER mock test structure')">
+        <div class="cc-title">JIPMER</div>
+        <div class="cc-sub">PCB + English + Logic<br>2.5 hrs · 200 Qs</div>
+      </div>
+    </div>
+
+    <div class="section-label">Government &amp; civil services <span class="badge warn">UPSC, SSC, IBPS, RRB…</span></div>
+    <div class="cat-grid">
+      <div class="cat-card warn" onclick="sendPrompt('Show the UPSC CSE Prelims mock test structure')">
+        <div class="cc-title">UPSC CSE Prelims</div>
+        <div class="cc-sub">GS Paper 1 + CSAT<br>2 hrs each · 100 Qs each</div>
+      </div>
+      <div class="cat-card warn" onclick="sendPrompt('Show the SSC CGL mock test structure')">
+        <div class="cc-title">SSC CGL</div>
+        <div class="cc-sub">Tier 1: Reasoning, GK, Quant, English<br>60 min · 100 Qs</div>
+      </div>
+      <div class="cat-card warn" onclick="sendPrompt('Show the IBPS PO mock test structure')">
+        <div class="cc-title">IBPS PO</div>
+        <div class="cc-sub">Reasoning · English · Quant<br>1 hr · 100 Qs</div>
+      </div>
+      <div class="cat-card warn" onclick="sendPrompt('Show the RRB NTPC mock test structure')">
+        <div class="cc-title">RRB NTPC</div>
+        <div class="cc-sub">Maths · Reasoning · GK<br>90 min · 100 Qs</div>
+      </div>
+      <div class="cat-card warn" onclick="sendPrompt('Show the SBI PO mock test structure')">
+        <div class="cc-title">SBI PO</div>
+        <div class="cc-sub">Reasoning · English · DI<br>60 min · 100 Qs</div>
+      </div>
+      <div class="cat-card warn" onclick="sendPrompt('Show the IBPS Clerk mock test structure')">
+        <div class="cc-title">IBPS Clerk</div>
+        <div class="cc-sub">Reasoning · English · Numerical<br>60 min · 100 Qs</div>
+      </div>
+    </div>
+
+    <div class="section-label">Management entrance <span class="badge pro">CAT, MAT, XAT, SNAP…</span></div>
+    <div class="cat-grid">
+      <div class="cat-card pro" onclick="sendPrompt('Show the CAT mock test structure and sections')">
+        <div class="cc-title">CAT</div>
+        <div class="cc-sub">VARC · DILR · QA<br>2 hrs · 66 Qs</div>
+      </div>
+      <div class="cat-card pro" onclick="sendPrompt('Show the XAT mock test structure')">
+        <div class="cc-title">XAT</div>
+        <div class="cc-sub">Decision Making · VALR · QA + GK<br>3 hrs · 101 Qs</div>
+      </div>
+      <div class="cat-card pro" onclick="sendPrompt('Show the SNAP mock test structure')">
+        <div class="cc-title">SNAP</div>
+        <div class="cc-sub">English · Analytical · QA<br>60 min · 60 Qs</div>
+      </div>
+      <div class="cat-card pro" onclick="sendPrompt('Show the NMAT mock test structure')">
+        <div class="cc-title">NMAT</div>
+        <div class="cc-sub">Language · QS · Logical<br>2 hrs · 108 Qs</div>
+      </div>
+      <div class="cat-card pro" onclick="sendPrompt('Show the MAT mock test structure')">
+        <div class="cc-title">MAT</div>
+        <div class="cc-sub">Language · Maths · DI · Reasoning · GK<br>150 min · 200 Qs</div>
+      </div>
+    </div>
+
+    <div class="section-label">Law &amp; defence <span class="badge danger">CLAT, NDA, CDS, AILET…</span></div>
+    <div class="cat-grid">
+      <div class="cat-card danger" onclick="sendPrompt('Show the CLAT mock test structure')">
+        <div class="cc-title">CLAT</div>
+        <div class="cc-sub">English · CR · Maths · GK · Legal<br>2 hrs · 150 Qs</div>
+      </div>
+      <div class="cat-card danger" onclick="sendPrompt('Show the NDA mock test structure')">
+        <div class="cc-title">NDA</div>
+        <div class="cc-sub">Mathematics + General Ability<br>2.5 hrs each · 120 / 150 Qs</div>
+      </div>
+      <div class="cat-card danger" onclick="sendPrompt('Show the CDS mock test structure')">
+        <div class="cc-title">CDS</div>
+        <div class="cc-sub">English · GK · Maths<br>2 hrs each · 100 Qs</div>
+      </div>
+      <div class="cat-card danger" onclick="sendPrompt('Show the AILET mock test structure')">
+        <div class="cc-title">AILET</div>
+        <div class="cc-sub">English · GK · Reasoning · Legal<br>90 min · 150 Qs</div>
+      </div>
+    </div>
+
+    <div class="section-label">School &amp; Olympiads</div>
+    <div class="cat-grid">
+      <div class="cat-card" onclick="sendPrompt('Show CBSE board mock test structure for Class 10 and 12')">
+        <div class="cc-title">CBSE board — Class 10 / 12</div>
+        <div class="cc-sub">All subjects · MCQ + subjective<br>3 hrs per paper</div>
+      </div>
+      <div class="cat-card" onclick="sendPrompt('Show ICSE board mock test structure')">
+        <div class="cc-title">ICSE / ISC</div>
+        <div class="cc-sub">Class 10 &amp; 12 · All subjects<br>2-3 hrs per paper</div>
+      </div>
+      <div class="cat-card" onclick="sendPrompt('Show state board mock test structure')">
+        <div class="cc-title">State boards</div>
+        <div class="cc-sub">UP · Maharashtra · TN · Karnataka…<br>All subjects</div>
+      </div>
+      <div class="cat-card" onclick="sendPrompt('Show NSO and Science Olympiad mock test structure')">
+        <div class="cc-title">NSO (Science Olympiad)</div>
+        <div class="cc-sub">Class 1-12 · Science<br>60 min · 35–50 Qs</div>
+      </div>
+      <div class="cat-card" onclick="sendPrompt('Show IMO and Maths Olympiad mock test structure')">
+        <div class="cc-title">IMO (Maths Olympiad)</div>
+        <div class="cc-sub">Class 1-12 · Mathematics<br>60 min · 35–50 Qs</div>
+      </div>
+      <div class="cat-card" onclick="sendPrompt('Show NTSE mock test structure')">
+        <div class="cc-title">NTSE</div>
+        <div class="cc-sub">MAT + SAT<br>2 hrs each · 100 Qs</div>
+      </div>
+      <div class="cat-card" onclick="sendPrompt('Show KVPY mock test structure')">
+        <div class="cc-title">KVPY</div>
+        <div class="cc-sub">SA / SX / SB streams<br>3 hrs · Mixed Qs</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN TAB -->
+  <div id="tab-admin" class="panel">
+    <div class="section-label">Admin panel — platform control</div>
+    <div class="row" style="gap:8px;flex-wrap:wrap">
+      <div class="node pro" style="flex:1" onclick="sendPrompt('Describe the User Management section of the admin panel')">
+        <i class="ti ti-users" aria-hidden="true" style="font-size:16px;color:var(--text-pro)"></i>
+        <div class="nt">User management</div>
+        <div class="ns">Create, suspend, role assign</div>
+      </div>
+      <div class="node pro" style="flex:1" onclick="sendPrompt('Describe the Test Management section of the admin panel')">
+        <i class="ti ti-file-check" aria-hidden="true" style="font-size:16px;color:var(--text-pro)"></i>
+        <div class="nt">Test management</div>
+        <div class="ns">All tests, flag, archive</div>
+      </div>
+      <div class="node pro" style="flex:1" onclick="sendPrompt('Describe the Exam Catalogue management in the admin panel')">
+        <i class="ti ti-book" aria-hidden="true" style="font-size:16px;color:var(--text-pro)"></i>
+        <div class="nt">Exam catalogue</div>
+        <div class="ns">Curate public exams</div>
+      </div>
+      <div class="node pro" style="flex:1" onclick="sendPrompt('Describe the System Settings in the admin panel')">
+        <i class="ti ti-settings-2" aria-hidden="true" style="font-size:16px;color:var(--text-pro)"></i>
+        <div class="nt">System settings</div>
+        <div class="ns">Limits, maintenance, config</div>
+      </div>
+    </div>
+
+    <div class="section-label" style="margin-top:4px">Platform-level settings</div>
+    <div class="cat-grid">
+      <div class="cat-card" onclick="sendPrompt('What does max questions per test setting control?')"><div class="cc-title">Max questions / test</div><div class="cc-sub">Global cap enforced on creation</div></div>
+      <div class="cat-card" onclick="sendPrompt('What does max duration setting control?')"><div class="cc-title">Max test duration</div><div class="cc-sub">Cap in minutes per test</div></div>
+      <div class="cat-card" onclick="sendPrompt('What file types are configurable in admin settings?')"><div class="cc-title">Allowed file types</div><div class="cc-sub">PDF, images for uploads</div></div>
+      <div class="cat-card" onclick="sendPrompt('How does maintenance mode work in the admin panel?')"><div class="cc-title">Maintenance mode</div><div class="cc-sub">Take platform offline safely</div></div>
+      <div class="cat-card" onclick="sendPrompt('How does institution / org management work in admin?')"><div class="cc-title">Institution management</div><div class="cc-sub">Create org accounts, SSO</div></div>
+      <div class="cat-card" onclick="sendPrompt('How does the platform-wide analytics dashboard work in admin?')"><div class="cc-title">Platform analytics</div><div class="cc-sub">MAU, tests/day, top exams</div></div>
+    </div>
+
+    <div class="section-label">Catalogue curation workflow</div>
+    <div class="steps" role="list">
+      <div class="step done" role="listitem"><div class="step-circle"><i class="ti ti-check" style="font-size:11px" aria-hidden="true"></i></div><div class="step-label">Creator submits for listing</div></div>
+      <div class="step-line"></div>
+      <div class="step active" role="listitem"><div class="step-circle">2</div><div class="step-label">Admin reviews quality</div></div>
+      <div class="step-line"></div>
+      <div class="step pending" role="listitem"><div class="step-circle">3</div><div class="step-label">Admin approves / rejects</div></div>
+      <div class="step-line"></div>
+      <div class="step pending" role="listitem"><div class="step-circle">4</div><div class="step-label">Listed in exam catalogue</div></div>
+      <div class="step-line"></div>
+      <div class="step pending" role="listitem"><div class="step-circle">5</div><div class="step-label">Takers can discover &amp; enrol</div></div>
+    </div>
+
+    <div class="info-box" style="margin-top:16px">
+      <strong>Institution / School accounts:</strong> Admins can create org-level accounts that grant batch creator access to all teachers in a school, coaching centre, or organisation. Students join via org invite code or SSO. Results roll up to institution-level dashboards for principals and administrators.
+    </div>
+  </div>
+</div>
+
+<!-- Details Drawer Overlay -->
+<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+
+<!-- Sliding Details Drawer -->
+<div class="drawer" id="drawer">
+  <div class="drawer-header">
+    <div class="drawer-title-area">
+      <span class="drawer-category" id="drawer-category">Category</span>
+      <h3 class="drawer-title" id="drawer-title">Title</h3>
+    </div>
+    <button class="drawer-close" onclick="closeDrawer()" aria-label="Close details">
+      <i class="ti ti-x"></i>
+    </button>
+  </div>
+  <div class="drawer-content" id="drawer-content">
+    <!-- Dynamic content goes here -->
+  </div>
+  <div class="drawer-footer">
+    <button class="btn btn-primary" id="btn-copy-prompt" onclick="triggerCopy()">
+      <i class="ti ti-copy"></i> Copy Prompt Text
+    </button>
+  </div>
+</div>
+
+<!-- Floating Toast Notification -->
+<div class="toast" id="toast">
+  <i class="ti ti-check"></i>
+  <span id="toast-text">Prompt copied to clipboard!</span>
+</div>
+
+<script>
+let activePromptText = "";
+
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  const tabs=['overview','taker','creator','exams','admin'];
+  const idx=tabs.indexOf(name);
+  document.querySelectorAll('.tab')[idx].classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+}
+
+// Custom prompt details database linking to repo schemas & models
+const customPrompts = {
+  "Explain the Creator role in detail": {
+    category: "User Roles",
+    title: "Creator (Examiner/Teacher)",
+    techRef: "apps/api/src/services/auth.service.ts",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/api/src/services/auth.service.ts",
+    dbModel: "User (role: CREATOR), Test, Section, Question",
+    content: `
+      <p>Creators are the orchestrators of exams, quizzes, and sections on the QuizForge platform.</p>
+      <div class="tech-card">
+        <h6>Code References:</h6>
+        <ul>
+          <li><strong>Auth Handler:</strong> <code>AuthService.register</code> generates creator accounts.</li>
+          <li><strong>Prisma Schema:</strong> <code>model User</code> with relation <code>createdTests</code>.</li>
+        </ul>
+      </div>
+      <h5>Key Features:</h5>
+      <ul>
+        <li>Test construction with granular parameters (timers, backtrack controls, pool sizing).</li>
+        <li>Question repository bank creation and lookup.</li>
+        <li>Manual evaluation dashboard for essay submissions and uploads.</li>
+      </ul>
+    `
+  },
+  "Explain the Test Taker role in detail": {
+    category: "User Roles",
+    title: "Test Taker (Candidate)",
+    techRef: "apps/api/src/services/attempt.service.ts",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/api/src/services/attempt.service.ts",
+    dbModel: "User (role: TAKER), Attempt, Answer",
+    content: `
+      <p>Candidates taking tests under structured time limits and security constraints (such as fullscreen protection).</p>
+      <div class="tech-card">
+        <h6>Code References:</h6>
+        <ul>
+          <li><strong>Attempt Controller:</strong> <code>AttemptService.startAttempt</code> initializes taker sessions.</li>
+          <li><strong>Prisma Schema:</strong> <code>model Attempt</code> handles score logging, timers, and submission logs.</li>
+        </ul>
+      </div>
+      <h5>Key Features:</h5>
+      <ul>
+        <li>Secure exam workspace interface with auto-save to Redis.</li>
+        <li>Grid-based question navigator showing answered, pending, and flagged questions.</li>
+        <li>Real-time score calculation and detailed section-wise review sheets.</li>
+      </ul>
+    `
+  },
+  "Explain the Admin role in detail": {
+    category: "User Roles",
+    title: "Admin (Platform Manager)",
+    techRef: "apps/api/src/services/admin.service.ts",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/api/src/services/admin.service.ts",
+    dbModel: "User (role: ADMIN), global config database settings",
+    content: `
+      <p>Admins manage system parameters, review public exam catalog listings, and handle billing and institutional orgs.</p>
+      <div class="tech-card">
+        <h6>Code References:</h6>
+        <ul>
+          <li><strong>Admin Service:</strong> <a href="file:///c:/Users/14nir/Testing%20platform/quizforge/apps/api/src/services/admin.service.ts">admin.service.ts</a></li>
+          <li><strong>Telemetry:</strong> Tracks platform metrics like active takers, tests completed, and server loads.</li>
+        </ul>
+      </div>
+      <h5>Key Features:</h5>
+      <ul>
+        <li>Tenant & organization provisioning for SSO integrations.</li>
+        <li>System toggle switches for Maintenance Mode and global constraints.</li>
+        <li>Listing curation queue for public mock exams.</li>
+      </ul>
+    `
+  },
+  "Describe the Home and Discovery screen in detail": {
+    category: "Core Surfaces",
+    title: "Home & Discovery Dashboard",
+    techRef: "apps/web/src/screens/DashboardPage.tsx",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/web/src/screens/DashboardPage.tsx",
+    dbModel: "Test, Attempt, User",
+    content: `
+      <p>The main landing interface for authenticated students and creators. Displays registered courses, public exam shortcuts, search filters, and active timer reminders.</p>
+      <div class="tech-card">
+        <h6>Key References:</h6>
+        <ul>
+          <li><strong>Frontend view:</strong> <a href="file:///c:/Users/14nir/Testing%20platform/quizforge/apps/web/src/screens/DashboardPage.tsx">DashboardPage.tsx</a></li>
+          <li><strong>Join endpoint:</strong> Handles validation of access code strings.</li>
+        </ul>
+      </div>
+      <h5>Highlights:</h5>
+      <ul>
+        <li>Responsive test catalog browser with real-time text query filters.</li>
+        <li>"Resume Attempt" cards containing direct hooks to in-progress Redis sessions.</li>
+        <li>Alphanumeric access code input element triggering test invitation gates.</li>
+      </ul>
+    `
+  },
+  "Describe the Test builder in detail": {
+    category: "Core Surfaces",
+    title: "Dynamic Test Builder wizard",
+    techRef: "apps/web/src/screens/TestBuilderPage.tsx",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/web/src/screens/TestBuilderPage.tsx",
+    dbModel: "Test, Section, Question",
+    content: `
+      <p>A multi-step setup flow for instructors to write questions, sequence sections, and tweak scoring behaviors.</p>
+      <div class="tech-card">
+        <h6>Key References:</h6>
+        <ul>
+          <li><strong>UI Component:</strong> <a href="file:///c:/Users/14nir/Testing%20platform/quizforge/apps/web/src/screens/TestBuilderPage.tsx">TestBuilderPage.tsx</a></li>
+          <li><strong>Backend Service:</strong> <code>test.service.ts</code> validates structure rules.</li>
+        </ul>
+      </div>
+      <h5>Builder Steps:</h5>
+      <ol>
+        <li><strong>Configuration:</strong> Global titles, availability dates, negative score factors.</li>
+        <li><strong>Sections:</strong> Subjects reordering, custom time limits, random pooling parameters.</li>
+        <li><strong>Editor:</strong> Fenced input forms for MCQ, essay, matching, ordering types.</li>
+        <li><strong>Distribution:</strong> Access checklist, QR codes, direct URL, invitation grids.</li>
+      </ol>
+    `
+  },
+  "Describe the Mock test interface in detail": {
+    category: "Core Surfaces",
+    title: "Locked Mock Test taker View",
+    techRef: "apps/web/src/screens/ExamPage.tsx",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/web/src/screens/ExamPage.tsx",
+    dbModel: "Attempt, Answer",
+    content: `
+      <p>The proctored candidate interface designed for security, responsiveness, and offline resilience.</p>
+      <div class="tech-card">
+        <h6>Key References:</h6>
+        <ul>
+          <li><strong>UI Screen:</strong> <a href="file:///c:/Users/14nir/Testing%20platform/quizforge/apps/web/src/screens/ExamPage.tsx">ExamPage.tsx</a></li>
+          <li><strong>Zustand Store:</strong> Syncs responses in client cache, posting to Redis periodically.</li>
+        </ul>
+      </div>
+      <h5>UI Components:</h5>
+      <ul>
+        <li><strong>Left Area:</strong> Interactive question card showing marks, description text, options.</li>
+        <li><strong>Right Sidebar:</strong> Grid tracking status (Answered, Flagged for Review, Not Visited).</li>
+        <li><strong>Toolbar:</strong> Subtitle indicators, timer countdown, manual submit gate.</li>
+      </ul>
+    `
+  },
+  "Describe the Result and analytics screen in detail": {
+    category: "Core Surfaces",
+    title: "Taker Performance Results",
+    techRef: "apps/web/src/screens/ResultsPage.tsx",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/web/src/screens/ResultsPage.tsx",
+    dbModel: "Attempt, Answer",
+    content: `
+      <p>Visual feedback panels for takers showing scores, pass/fail metrics, and detailed correct answer keys.</p>
+      <div class="tech-card">
+        <h6>Key References:</h6>
+        <ul>
+          <li><strong>Frontend UI:</strong> <a href="file:///c:/Users/14nir/Testing%20platform/quizforge/apps/web/src/screens/ResultsPage.tsx">ResultsPage.tsx</a></li>
+          <li><strong>Metrics Engine:</strong> <code>AttemptService.getAttemptResults</code> evaluates percentile.</li>
+        </ul>
+      </div>
+      <h5>Details Renders:</h5>
+      <ul>
+        <li><strong>Stats Cards:</strong> Score values, accuracy percentage, time spent, ranking position.</li>
+        <li><strong>Performance Charts:</strong> Average points by subject or question tags.</li>
+        <li><strong>Review Grid:</strong> Color-coded answers (Green = correct, Red = incorrect) with explanation notes.</li>
+      </ul>
+    `
+  },
+  "Describe the Admin panel in detail": {
+    category: "Core Surfaces",
+    title: "System Admin Control Panel",
+    techRef: "apps/web/src/screens/AdminDashboardPage.tsx",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/web/src/screens/AdminDashboardPage.tsx",
+    dbModel: "Global settings models",
+    content: `
+      <p>Central management dashboard for super-users to configure tenant organizations, view usage telemetry, and audit tests.</p>
+      <div class="tech-card">
+        <h6>Key References:</h6>
+        <ul>
+          <li><strong>Admin Frontend:</strong> <a href="file:///c:/Users/14nir/Testing%20platform/quizforge/apps/web/src/screens/AdminDashboardPage.tsx">AdminDashboardPage.tsx</a></li>
+          <li><strong>Admin Service:</strong> <a href="file:///c:/Users/14nir/Testing%20platform/quizforge/apps/api/src/services/admin.service.ts">admin.service.ts</a></li>
+        </ul>
+      </div>
+      <h5>Management Utilities:</h5>
+      <ul>
+        <li><strong>Users Grid:</strong> Role adjustment (promotions to CREATOR or ADMIN) and access bans.</li>
+        <li><strong>Tests Queue:</strong> System-wide listings flagging tool.</li>
+        <li><strong>System Stats:</strong> Charts tracking MAU counts and API endpoints speed.</li>
+      </ul>
+    `
+  },
+  "How does the direct URL or QR code entry work?": {
+    category: "Taker Entry",
+    title: "Quick Link & QR Entry",
+    techRef: "apps/web/src/screens/TestGatePage.tsx",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/web/src/screens/TestGatePage.tsx",
+    dbModel: "Test.accessLink",
+    content: `
+      <p>Direct entry bypassing the main portal catalog. Enables examiners to share access codes in printed handouts or direct messages.</p>
+      <div class="tech-card">
+        <h6>Link Format:</h6>
+        <ul>
+          <li><strong>Path:</strong> <code>/test/gate?accessCode=PHY301</code></li>
+          <li><strong>Controller:</strong> Validates code constraints inside <code>test.service.ts</code>.</li>
+        </ul>
+      </div>
+      <h5>Interaction:</h5>
+      <p>Clicking link or scanning QR loads the instructions checklist on the gate page immediately, bypassing catalog discovery steps.</p>
+    `
+  },
+  "How does the access code entry work?": {
+    category: "Taker Entry",
+    title: "Alphanumeric Access Code Gate",
+    techRef: "apps/web/src/screens/DashboardPage.tsx",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/web/src/screens/DashboardPage.tsx",
+    dbModel: "Test.accessCode",
+    content: `
+      <p>Allows takers to join specific mock exams by submitting short code tokens on their main dashboards.</p>
+      <div class="tech-card">
+        <h6>Technical Stack:</h6>
+        <ul>
+          <li><strong>API Route:</strong> <code>GET /api/tests/join/:code</code> in <code>tests.routes.ts</code></li>
+          <li><strong>Database Schema:</strong> Matches input code with indexed column <code>Test.accessCode</code>.</li>
+        </ul>
+      </div>
+    `
+  },
+  "How does discovery via exam catalogue work?": {
+    category: "Taker Entry",
+    title: "Exam Catalogue Discovery",
+    techRef: "apps/web/src/screens/DashboardPage.tsx",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/web/src/screens/DashboardPage.tsx",
+    dbModel: "Test (status: PUBLISHED)",
+    content: `
+      <p>Takers browse available public exams curated by admins or creator institutions, filtering by exam category groups.</p>
+      <div class="tech-card">
+        <h6>Database query:</h6>
+        <ul>
+          <li>Fetches records where <code>Test.status == TestStatus.PUBLISHED</code>.</li>
+          <li>Sorts results based on difficulty levels, creation date, or search matches.</li>
+        </ul>
+      </div>
+    `
+  },
+  "How does email invitation entry work?": {
+    category: "Taker Entry",
+    title: "Targeted Email Invitations",
+    techRef: "apps/api/src/services/test.service.ts",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/api/src/services/test.service.ts",
+    dbModel: "Attempt, User",
+    content: `
+      <p>Generates pre-authenticated attempt invitation tokens sent to candidates' emails, locking test access to specific users.</p>
+      <div class="tech-card">
+        <h6>Technical Process:</h6>
+        <ul>
+          <li><strong>Service:</strong> <code>test.service.ts</code> maps recipient list.</li>
+          <li><strong>Constraints:</strong> Generates unique records associated with taker emails, blocking other account claims.</li>
+        </ul>
+      </div>
+    `
+  },
+  "What happens when a registered user logs in?": {
+    category: "Taker Authentication",
+    title: "Registered User Authentication Session",
+    techRef: "apps/web/src/screens/LoginPage.tsx",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/web/src/screens/LoginPage.tsx",
+    dbModel: "User, RefreshToken",
+    content: `
+      <p>Verifies user credentials, sets cookies, and redirects users to dashboard views matching their specific account roles.</p>
+      <div class="tech-card">
+        <h6>Backend Process:</h6>
+        <ul>
+          <li><strong>Auth Service:</strong> <code>AuthService.login</code> handles password match.</li>
+          <li><strong>JWT Generation:</strong> Returns access tokens and signs <code>RefreshToken</code> records.</li>
+        </ul>
+      </div>
+    `
+  },
+  "How does guest mode work for test takers?": {
+    category: "Taker Authentication",
+    title: "Guest / Anonymous Attempts",
+    techRef: "apps/api/prisma/schema.prisma",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/api/prisma/schema.prisma",
+    dbModel: "Attempt (guestName, guestEmail, guestSessionId)",
+    content: `
+      <p>Allows guest candidates to write public assessments without requiring accounts. Prompts for profile data before launching.</p>
+      <div class="tech-card">
+        <h6>Database Columns:</h6>
+        <ul>
+          <li><code>Attempt.takerId</code> remains <code>null</code>.</li>
+          <li><code>Attempt.guestName</code> and <code>Attempt.guestEmail</code> are filled directly from inputs.</li>
+          <li><code>Attempt.guestSessionId</code> is stored in cookie state to track the session.</li>
+        </ul>
+      </div>
+    `
+  },
+  "How does SSO login work for institution students?": {
+    category: "Taker Authentication",
+    title: "Single Sign-On (SAML / OAuth)",
+    techRef: "apps/api/src/services/auth.service.ts",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/api/src/services/auth.service.ts",
+    dbModel: "User (role: TAKER)",
+    content: `
+      <p>Federated identity solution mapping organizational credentials to platform student accounts.</p>
+      <div class="tech-card">
+        <h6>Technical Stack:</h6>
+        <ul>
+          <li><strong>Service:</strong> Authenticates via SAML or Google Workspace triggers.</li>
+          <li><strong>Mapping:</strong> Syncs name, email, and registers students under the organization tenant account.</li>
+        </ul>
+      </div>
+    `
+  },
+  "What information is shown in the test overview card?": {
+    category: "Gate Screen",
+    title: "Test overview details card",
+    techRef: "apps/web/src/screens/TestGatePage.tsx",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/web/src/screens/TestGatePage.tsx",
+    dbModel: "Test metadata",
+    content: `
+      <p>A summary block rendering title descriptions, author names, total questions, and maximum marks to candidates.</p>
+      <div class="tech-card">
+        <h6>Gate View:</h6>
+        <ul>
+          <li><strong>Screen:</strong> <a href="file:///c:/Users/14nir/Testing%20platform/quizforge/apps/web/src/screens/TestGatePage.tsx">TestGatePage.tsx</a></li>
+          <li><strong>Database mapping:</strong> Displays <code>Test.title</code>, <code>Test.description</code>, and section counts.</li>
+        </ul>
+      </div>
+    `
+  },
+  "What timing info is shown on the gate screen?": {
+    category: "Gate Screen",
+    title: "Timing and Availability Bounds",
+    techRef: "apps/web/src/screens/TestGatePage.tsx",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/web/src/screens/TestGatePage.tsx",
+    dbModel: "Test (startsAt, endsAt, durationMins)",
+    content: `
+      <p>Guides candidate timing bounds: renders global exam durations or schedules availability dates.</p>
+      <div class="tech-card">
+        <h6>Logic:</h6>
+        <ul>
+          <li>Displays values from <code>startsAt</code> and <code>endsAt</code> timestamps.</li>
+          <li>Enforces clock bounds: blocks attempt initialization button if outside active dates.</li>
+        </ul>
+      </div>
+    `
+  },
+  "What marking scheme info is shown on the gate screen?": {
+    category: "Gate Screen",
+    title: "Evaluation scoring rules",
+    techRef: "apps/web/src/screens/TestGatePage.tsx",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/web/src/screens/TestGatePage.tsx",
+    dbModel: "Test (passingScore, negativeMarkingGlobal)",
+    content: `
+      <p>Explains passing percentage constraints and checks if negative scores apply to wrong attempts.</p>
+      <div class="tech-card">
+        <h6>Scoring references:</h6>
+        <ul>
+          <li><strong>Passing threshold:</strong> Rendered from <code>passingScore</code> (e.g. 40%).</li>
+          <li><strong>Negative mark check:</strong> Highlights if wrong options incur scoring penalties.</li>
+        </ul>
+      </div>
+    `
+  },
+  "What instructions are shown on the gate screen?": {
+    category: "Gate Screen",
+    title: "Test instructions text",
+    techRef: "apps/web/src/screens/TestGatePage.tsx",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/web/src/screens/TestGatePage.tsx",
+    dbModel: "Test.instructions",
+    content: `
+      <p>Rich-text description configured by examiners outlining rules, tools allowed, and focus policies.</p>
+      <div class="tech-card">
+        <h6>Technical parameters:</h6>
+        <ul>
+          <li><strong>Field:</strong> Renders <code>Test.instructions</code> text block.</li>
+          <li><strong>Anti-cheat highlight:</strong> Warns students if <code>requireFullscreen</code> toggle is enabled.</li>
+        </ul>
+      </div>
+    `
+  },
+  "What does the Start Test button do?": {
+    category: "Gate Screen",
+    title: "Start Attempt Process",
+    techRef: "apps/api/src/services/attempt.service.ts",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/api/src/services/attempt.service.ts",
+    dbModel: "Attempt (status: IN_PROGRESS)",
+    content: `
+      <p>Locks state and creates the active attempt record, assigning randomized questions if requested.</p>
+      <div class="tech-card">
+        <h6>Process Details:</h6>
+        <ul>
+          <li><strong>Database:</strong> Inserts new <code>Attempt</code> row with <code>startedAt = now()</code>.</li>
+          <li><strong>Question Sorter:</strong> Generates question indices sequences for <code>assignedQuestions</code> payload.</li>
+        </ul>
+      </div>
+    `
+  },
+  "How does section navigation work mid-test?": {
+    category: "Test Taking",
+    title: "Section navigation tabs",
+    techRef: "apps/web/src/screens/ExamPage.tsx",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/web/src/screens/ExamPage.tsx",
+    dbModel: "Section, Test.allowSectionBacktrack",
+    content: `
+      <p>Allows takers to switch between subjects (Physics, Chemistry, Maths tabs) in the taking interface.</p>
+      <div class="tech-card">
+        <h6>Navigation rules:</h6>
+        <ul>
+          <li><strong>Backtrack restriction:</strong> Blocks clicking previous tabs if <code>allowSectionBacktrack = false</code>.</li>
+          <li><strong>Timer limits:</strong> Automatically forwards taker to next tab if section timer runs out.</li>
+        </ul>
+      </div>
+    `
+  },
+  "How does the submit button work during a test?": {
+    category: "Test Taking",
+    title: "Manual submit action",
+    techRef: "apps/api/src/services/grading.service.ts",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/api/src/services/grading.service.ts",
+    dbModel: "Attempt (status: SUBMITTED)",
+    content: `
+      <p>Takers manually push submission button. Prompts confirmation modal before triggering backend evaluation code.</p>
+      <div class="tech-card">
+        <h6>Backend Process:</h6>
+        <ul>
+          <li><strong>Route:</strong> <code>POST /api/attempts/:id/submit</code></li>
+          <li><strong>Grader:</strong> Compares choice responses with database keys for auto-gradable types.</li>
+        </ul>
+      </div>
+    `
+  },
+  "How do MCQ options work in the test interface?": {
+    category: "Test Taking",
+    title: "MCQ Options Interaction",
+    techRef: "apps/web/src/screens/ExamPage.tsx",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/web/src/screens/ExamPage.tsx",
+    dbModel: "Answer.responseData",
+    content: `
+      <p>Takers select radio controls (Single Choice) or checkbox grids (Multiple Choice) to mark their answers.</p>
+      <div class="tech-card">
+        <h6>State Flow:</h6>
+        <ul>
+          <li>Updates Zustand client store to reflect choice indices.</li>
+          <li>Triggers a debounced request saving answer schema parameters to the server database.</li>
+        </ul>
+      </div>
+    `
+  },
+  "What is the auto-submit flow on timer expiry?": {
+    category: "Post-Submission Flow",
+    title: "Automatic Timer Expiry submission",
+    techRef: "apps/api/src/services/attempt.service.ts",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/api/src/services/attempt.service.ts",
+    dbModel: "Attempt (status: EXPIRED)",
+    content: `
+      <p>Automatically triggers attempt finalization if candidate duration clocks hit zero, locking input boxes immediately.</p>
+      <div class="tech-card">
+        <h6>Process Detail:</h6>
+        <ul>
+          <li><strong>Client clock:</strong> Hits 00:00, calling backend submit function.</li>
+          <li><strong>Server verification:</strong> Rejects edits if current time exceeds <code>startedAt + duration</code>.</li>
+        </ul>
+      </div>
+    `
+  },
+  "What happens when a taker clicks Submit manually?": {
+    category: "Post-Submission Flow",
+    title: "Manual Submit Confirmation Dialog",
+    techRef: "apps/web/src/screens/ExamPage.tsx",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/web/src/screens/ExamPage.tsx",
+    dbModel: "Attempt",
+    content: `
+      <p>Opens a confirmation modal reminding candidates of unanswered, skipped, or review-flagged questions.</p>
+      <div class="tech-card">
+        <h6>Flow checks:</h6>
+        <ul>
+          <li>Aggregates count of unanswered items in candidate response store.</li>
+          <li>Sends confirmation request to final submission endpoint.</li>
+        </ul>
+      </div>
+    `
+  },
+  "Describe the instant results screen in detail": {
+    category: "Post-Submission Flow",
+    title: "Instant Results report Card",
+    techRef: "apps/web/src/screens/ResultsPage.tsx",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/web/src/screens/ResultsPage.tsx",
+    dbModel: "Attempt, Answer",
+    content: `
+      <p>Displayed immediately after submission if <code>showResultsInstantly</code> is enabled on the Test record.</p>
+      <div class="tech-card">
+        <h6>Report data:</h6>
+        <ul>
+          <li><strong>Marks:</strong> Earned score compared against total test marks.</li>
+          <li><strong>Ratios:</strong> Pass/Fail banners and color indicators.</li>
+        </ul>
+      </div>
+    `
+  },
+  "What does the taker see when results are pending?": {
+    category: "Post-Submission Flow",
+    title: "Grading Pending Interface",
+    techRef: "apps/web/src/screens/ResultsPage.tsx",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/web/src/screens/ResultsPage.tsx",
+    dbModel: "Attempt (status: GRADING)",
+    content: `
+      <p>Takers land on a confirmation screen indicating their answers are locked and awaiting grading review.</p>
+      <div class="tech-card">
+        <h6>Conditions:</h6>
+        <ul>
+          <li>Active when <code>Test.showResultsInstantly = false</code>.</li>
+          <li>Active when attempt contains <code>LONG_ANSWER</code> or <code>FILE_UPLOAD</code> questions.</li>
+        </ul>
+      </div>
+    `
+  },
+  "Describe the answer sheet review screen": {
+    category: "Post-Submission Flow",
+    title: "Answer Review Panel",
+    techRef: "apps/web/src/screens/ResultsPage.tsx",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/web/src/screens/ResultsPage.tsx",
+    dbModel: "Answer (relations)",
+    content: `
+      <p>Lists questions with taker response text side-by-side with correct alternatives and detailed creator solution notes.</p>
+      <div class="tech-card">
+        <h6>Visibility Controls:</h6>
+        <ul>
+          <li>Access depends on the <code>Test.showCorrectAnswers</code> database toggle.</li>
+          <li>Includes details on marking deductions if negative grading was applied.</li>
+        </ul>
+      </div>
+    `
+  },
+  "Describe the performance analysis screen for the taker": {
+    category: "Post-Submission Flow",
+    title: "Taker performance analytics",
+    techRef: "apps/web/src/screens/ResultsPage.tsx",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/web/src/screens/ResultsPage.tsx",
+    dbModel: "Attempt, Answer",
+    content: `
+      <p>Graphs and charts compiling accuracy by tags, subjects, section weight, and average answer speed.</p>
+      <div class="tech-card">
+        <h6>Analytics Data:</h6>
+        <ul>
+          <li>Tracks section-wise points allocation.</li>
+          <li>Renders difficulty level success rates (Easy, Medium, Hard).</li>
+        </ul>
+      </div>
+    `
+  },
+  "How does the All India Rank feature work?": {
+    category: "Post-Submission Flow",
+    title: "Global Ranking Calculation",
+    techRef: "apps/api/src/services/attempt.service.ts",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/api/src/services/attempt.service.ts",
+    dbModel: "Attempt",
+    content: `
+      <p>Computes candidate ranking percentile by querying score lists for all takers who completed the same test.</p>
+      <div class="tech-card">
+        <h6>Database calculation:</h6>
+        <ul>
+          <li><strong>Query:</strong> Aggregates scores where <code>Attempt.testId = id</code> and status is <code>SUBMITTED</code> or <code>GRADED</code>.</li>
+          <li><strong>Rank:</strong> Outputs position sorting by highest raw score.</li>
+        </ul>
+      </div>
+    `
+  },
+  "How does the retake test feature work?": {
+    category: "Post-Submission Flow",
+    title: "Retake Attempt Logic",
+    techRef: "apps/api/src/services/attempt.service.ts",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/api/src/services/attempt.service.ts",
+    dbModel: "Test (allowMultipleAttempts, maxAttempts)",
+    content: `
+      <p>Controls if candidates are permitted to attempt the test again. Resets attempt context.</p>
+      <div class="tech-card">
+        <h6>Verification:</h6>
+        <ul>
+          <li><strong>Service:</strong> Checks if <code>allowMultipleAttempts</code> is true and user attempt count is below <code>maxAttempts</code>.</li>
+          <li><strong>Data isolation:</strong> Creates a completely new <code>Attempt</code> record without inheriting past selections.</li>
+        </ul>
+      </div>
+    `
+  },
+  "Describe the My Tests section on the creator dashboard": {
+    category: "Creator Dashboard",
+    title: "My Tests Manager",
+    techRef: "apps/web/src/screens/DashboardPage.tsx",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/web/src/screens/DashboardPage.tsx",
+    dbModel: "Test",
+    content: `
+      <p>Dashboard screen for instructors to organize their created exams, monitor drafts, and audit active tests.</p>
+      <div class="tech-card">
+        <h6>Data source:</h6>
+        <ul>
+          <li>Queries <code>Test</code> where <code>creatorId = userId</code>.</li>
+          <li>Groups rows into tabbed folders: Drafts, Published, Closed, Archived.</li>
+        </ul>
+      </div>
+    `
+  },
+  "Describe the Question Bank on the creator dashboard": {
+    category: "Creator Dashboard",
+    title: "Shared Question Bank library",
+    techRef: "apps/web/src/screens/QuestionBankPage.tsx",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/web/src/screens/QuestionBankPage.tsx",
+    dbModel: "QuestionBank",
+    content: `
+      <p>An indexed repository where instructors store reusable questions, allowing quick search and import into new sections.</p>
+      <div class="tech-card">
+        <h6>Prisma model:</h6>
+        <ul>
+          <li><strong>Table:</strong> <code>QuestionBank</code>.</li>
+          <li><strong>Fields:</strong> Type, body text, marks, tags, difficulty, and questionData schema JSON.</li>
+        </ul>
+      </div>
+    `
+  },
+  "Describe the Results and analytics section on the creator dashboard": {
+    category: "Creator Dashboard",
+    title: "Instructor Analytics dashboard",
+    techRef: "apps/web/src/screens/CreatorResultsPage.tsx",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/web/src/screens/CreatorResultsPage.tsx",
+    dbModel: "Attempt, Test",
+    content: `
+      <p>Visual summary of candidate performance. Helps instructors identify syllabus bottlenecks and check grade curves.</p>
+      <div class="tech-card">
+        <h6>Key Statistics:</h6>
+        <ul>
+          <li><strong>Stats:</strong> Average score, highest marks, pass rate percentage.</li>
+          <li><strong>Graphs:</strong> Score histograms and answer accuracy index lists.</li>
+        </ul>
+      </div>
+    `
+  },
+  "Describe the Grading queue on the creator dashboard": {
+    category: "Creator Dashboard",
+    title: "Manual Grading Review Queue",
+    techRef: "apps/api/src/services/grading.service.ts",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/api/src/services/grading.service.ts",
+    dbModel: "Attempt (status: GRADING), Answer",
+    content: `
+      <p>Instructor workflow containing all submitted student papers that contain subjective or file upload questions.</p>
+      <div class="tech-card">
+        <h6>Grading process:</h6>
+        <ul>
+          <li>Filters list of attempts with status <code>GRADING</code>.</li>
+          <li>Highlights specific questions requiring points and feedback notes inputs.</li>
+        </ul>
+      </div>
+    `
+  },
+  "What fields are in the test configuration step?": {
+    category: "Test Builder",
+    title: "Step 1: Test configuration fields",
+    techRef: "apps/web/src/screens/TestBuilderPage.tsx",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/web/src/screens/TestBuilderPage.tsx",
+    dbModel: "Test schema",
+    content: `
+      <p>Basic profile details of the exam. Configured at the start of the builder wizard.</p>
+      <div class="tech-card">
+        <h6>Prisma mapping:</h6>
+        <ul>
+          <li><code>title</code>, <code>description</code>, <code>instructions</code> fields.</li>
+          <li><code>timingMode</code> toggle (Global vs Per-Section).</li>
+          <li><code>passingScore</code> (Percentage target).</li>
+        </ul>
+      </div>
+    `
+  },
+  "How does the timing setup work in the test builder?": {
+    category: "Test Builder",
+    title: "Timer Modes setup",
+    techRef: "apps/web/src/screens/TestBuilderPage.tsx",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/web/src/screens/TestBuilderPage.tsx",
+    dbModel: "Test.timingMode",
+    content: `
+      <p>Determines how the count-down timer behaves during the attempt. Selectable via simple layout switches.</p>
+      <div class="tech-card">
+        <h6>Modes:</h6>
+        <ul>
+          <li><strong>GLOBAL:</strong> A single timer for the whole exam (e.g. 180 mins).</li>
+          <li><strong>PER_SECTION:</strong> Separate duration bounds for each section tab.</li>
+        </ul>
+      </div>
+    `
+  },
+  "How does the test window configuration work?": {
+    category: "Test Builder",
+    title: "Test window limits",
+    techRef: "apps/web/src/screens/TestBuilderPage.tsx",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/web/src/screens/TestBuilderPage.tsx",
+    dbModel: "Test (startsAt, endsAt)",
+    content: `
+      <p>Specifies the dates during which candidates can launch attempts. Enforces availability gates.</p>
+      <div class="tech-card">
+        <h6>Parameters:</h6>
+        <ul>
+          <li><strong>startsAt:</strong> ISO timestamp opening test access.</li>
+          <li><strong>endsAt:</strong> ISO timestamp closing access bounds.</li>
+        </ul>
+      </div>
+    `
+  },
+  "How does pass/fail and scoring configuration work?": {
+    category: "Test Builder",
+    title: "Scoring configurations",
+    techRef: "apps/web/src/screens/TestBuilderPage.tsx",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/web/src/screens/TestBuilderPage.tsx",
+    dbModel: "Test (passingScore, negativeMarkingGlobal)",
+    content: `
+      <p>Adjusts passing criteria, global default negative scores, and correct choice weight values.</p>
+      <div class="tech-card">
+        <h6>Scoring Logic:</h6>
+        <ul>
+          <li><strong>passingScore:</strong> Integer score target (e.g., 50%).</li>
+          <li><strong>negativeMarkingGlobal:</strong> Deducts marks for incorrect selections.</li>
+        </ul>
+      </div>
+    `
+  },
+  "What behaviour toggles are available in test configuration?": {
+    category: "Test Builder",
+    title: "Security and Behavior flags",
+    techRef: "apps/web/src/screens/TestBuilderPage.tsx",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/web/src/screens/TestBuilderPage.tsx",
+    dbModel: "Test (flags)",
+    content: `
+      <p>Boolean switches adjusting anti-cheat triggers and navigation permissions.</p>
+      <div class="tech-card">
+        <h6>Toggles:</h6>
+        <ul>
+          <li><code>requireFullscreen</code>: Triggers locks if user switches tabs.</li>
+          <li><code>shuffleQuestions</code>: Randomizes order of questions per attempt.</li>
+          <li><code>allowSectionBacktrack</code>: Restricts returning to previous tabs.</li>
+        </ul>
+      </div>
+    `
+  },
+  "How do you add a new section in the test builder?": {
+    category: "Section Builder",
+    title: "Section Provisioning",
+    techRef: "apps/api/src/services/section.service.ts",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/api/src/services/section.service.ts",
+    dbModel: "Section",
+    content: `
+      <p>Adds a new subject tab (e.g. "Physics", "verbal logic") grouping specific lists of questions.</p>
+      <div class="tech-card">
+        <h6>Backend Process:</h6>
+        <ul>
+          <li><strong>API Route:</strong> <code>POST /api/sections</code></li>
+          <li><strong>Service:</strong> <code>SectionService.createSection</code> creates Section db records.</li>
+        </ul>
+      </div>
+    `
+  },
+  "How does section drag-to-reorder work?": {
+    category: "Section Builder",
+    title: "Drag Section Sorting",
+    techRef: "apps/web/src/screens/TestBuilderPage.tsx",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/web/src/screens/TestBuilderPage.tsx",
+    dbModel: "Section.order",
+    content: `
+      <p>Drag-and-drop section headers visuals. Reordering updates order index values in database.</p>
+      <div class="tech-card">
+        <h6>Technical process:</h6>
+        <ul>
+          <li>Client recalculates indices sequence on drop event.</li>
+          <li>Pushes updated order list to <code>PUT /api/sections/reorder</code>.</li>
+        </ul>
+      </div>
+    `
+  },
+  "How does per-section timing work?": {
+    category: "Section Builder",
+    title: "Per-Section Duration limits",
+    techRef: "apps/web/src/screens/TestBuilderPage.tsx",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/web/src/screens/TestBuilderPage.tsx",
+    dbModel: "Section.durationMins",
+    content: `
+      <p>Specifies how many minutes a candidate can spend on a particular section tab before lockouts occur.</p>
+      <div class="tech-card">
+        <h6>Timing Rules:</h6>
+        <ul>
+          <li>Enabled only if <code>Test.timingMode = PER_SECTION</code>.</li>
+          <li>Timer resets when candidate changes tabs. Timer expiry locks section responses.</li>
+        </ul>
+      </div>
+    `
+  },
+  "What is the question pool feature in sections?": {
+    category: "Section Builder",
+    title: "Dynamic Question pool",
+    techRef: "apps/web/src/screens/TestBuilderPage.tsx",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/web/src/screens/TestBuilderPage.tsx",
+    dbModel: "Section (questionsToDisplay, totalQuestionsInPool)",
+    content: `
+      <p>Creates dynamic exams by drawing random subsets of questions for each attempt sheet.</p>
+      <div class="tech-card">
+        <h6>Pooling Parameters:</h6>
+        <ul>
+          <li><strong>totalQuestionsInPool:</strong> Count of questions added to section.</li>
+          <li><strong>questionsToDisplay:</strong> Subset size shown to candidates.</li>
+        </ul>
+      </div>
+    `
+  },
+  "How does section instructions setup work?": {
+    category: "Section Builder",
+    title: "Section-specific instructions",
+    techRef: "apps/web/src/screens/TestBuilderPage.tsx",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/web/src/screens/TestBuilderPage.tsx",
+    dbModel: "Section.instructions",
+    content: `
+      <p>Text blocks shown above questions inside a section outlining equations, read passages, or subject constraints.</p>
+      <div class="tech-card">
+        <h6>Database Column:</h6>
+        <ul>
+          <li>Stores instruction markdown inside <code>Section.instructions</code> database column.</li>
+        </ul>
+      </div>
+    `
+  },
+  "How does the access code sharing work?": {
+    category: "Publishing Tools",
+    title: "Access Code generation",
+    techRef: "apps/web/src/screens/TestBuilderPage.tsx",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/web/src/screens/TestBuilderPage.tsx",
+    dbModel: "Test.accessCode",
+    content: `
+      <p>Displays copyable 6-digit access code upon publishing (e.g. <code>JEE2026</code>) that students type to join.</p>
+      <div class="tech-card">
+        <h6>Technical parameters:</h6>
+        <ul>
+          <li><strong>Database:</strong> Checks unique constraints on <code>accessCode</code> strings.</li>
+        </ul>
+      </div>
+    `
+  },
+  "How does direct link sharing work?": {
+    category: "Publishing Tools",
+    title: "Direct link generation",
+    techRef: "apps/web/src/screens/TestBuilderPage.tsx",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/web/src/screens/TestBuilderPage.tsx",
+    dbModel: "Test.accessLink",
+    content: `
+      <p>Instructors copy direct links pointing to candidate test overview gate views.</p>
+      <div class="tech-card">
+        <h6>Format:</h6>
+        <ul>
+          <li>URL contains access code query: <code>/test/gate?accessCode=ABCDEF</code>.</li>
+        </ul>
+      </div>
+    `
+  },
+  "How does email invite distribution work?": {
+    category: "Publishing Tools",
+    title: "Email list invites",
+    techRef: "apps/api/src/services/test.service.ts",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/api/src/services/test.service.ts",
+    dbModel: "Attempt, User",
+    content: `
+      <p>Pushes exam invitation emails to batch lists. Creates pre-allocated token rows for candidates.</p>
+      <div class="tech-card">
+        <h6>Mailing Stack:</h6>
+        <ul>
+          <li><strong>Mailer:</strong> Pushes notifications via Nodemailer utility class.</li>
+          <li><strong>Verification:</strong> Restricts test gate entry to email lists.</li>
+        </ul>
+      </div>
+    `
+  },
+  "How does listing a test on the exam catalogue work?": {
+    category: "Publishing Tools",
+    title: "Curated Catalogue list",
+    techRef: "apps/api/src/services/test.service.ts",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/api/src/services/test.service.ts",
+    dbModel: "Test (status: PUBLISHED)",
+    content: `
+      <p>Submits request flags to catalog index, making tests searchable by all visitors in public dashboard feeds.</p>
+      <div class="tech-card">
+        <h6>Properties:</h6>
+        <ul>
+          <li>Updates visibility flags. Admins audit quality before catalog activation.</li>
+        </ul>
+      </div>
+    `
+  },
+  "Describe the results dashboard for creators": {
+    category: "Grading & Analytics",
+    title: "Creator Analytics Summary",
+    techRef: "apps/web/src/screens/CreatorResultsPage.tsx",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/web/src/screens/CreatorResultsPage.tsx",
+    dbModel: "Attempt, Test",
+    content: `
+      <p>Visual summary charts illustrating score histograms, pass rate curves, and taker participation logs.</p>
+      <div class="tech-card">
+        <h6>UI View:</h6>
+        <ul>
+          <li><strong>File:</strong> <a href="file:///c:/Users/14nir/Testing%20platform/quizforge/apps/web/src/screens/CreatorResultsPage.tsx">CreatorResultsPage.tsx</a></li>
+        </ul>
+      </div>
+    `
+  },
+  "Describe the attempt detail view for creators": {
+    category: "Grading & Analytics",
+    title: "Student Answer Sheet audit",
+    techRef: "apps/web/src/screens/AttemptDetailPage.tsx",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/web/src/screens/AttemptDetailPage.tsx",
+    dbModel: "Attempt, Answer",
+    content: `
+      <p>Displays exact candidate answers, markings, time taken per question, and correct alternative tags.</p>
+      <div class="tech-card">
+        <h6>UI Component:</h6>
+        <ul>
+          <li><strong>File:</strong> <a href="file:///c:/Users/14nir/Testing%20platform/quizforge/apps/web/src/screens/AttemptDetailPage.tsx">AttemptDetailPage.tsx</a></li>
+        </ul>
+      </div>
+    `
+  },
+  "Describe the manual grading interface for subjective answers": {
+    category: "Grading & Analytics",
+    title: "Manual Grading interface",
+    techRef: "apps/api/src/services/grading.service.ts",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/api/src/services/grading.service.ts",
+    dbModel: "Answer (earnedMarks, graderNotes)",
+    content: `
+      <p>Allows examiners to view subjective essay text or S3-uploaded files, assign score numbers, and add notes.</p>
+      <div class="tech-card">
+        <h6>Service Logic:</h6>
+        <ul>
+          <li><strong>Endpoint:</strong> <code>POST /api/grading/grade-answer</code></li>
+          <li><strong>Logic:</strong> Updates points and transitions attempt status once complete.</li>
+        </ul>
+      </div>
+    `
+  },
+  "Describe the analytics features for creators": {
+    category: "Grading & Analytics",
+    title: "Creator Exam Analytics",
+    techRef: "apps/web/src/screens/CreatorResultsPage.tsx",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/web/src/screens/CreatorResultsPage.tsx",
+    dbModel: "Attempt",
+    content: `
+      <p>Identifies hardest questions, section-wise success ratios, and compiles timing telemetry stats.</p>
+      <div class="tech-card">
+        <h6>Features:</h6>
+        <ul>
+          <li>Item difficulty statistics tables.</li>
+          <li>Averages score calculations per section tab.</li>
+        </ul>
+      </div>
+    `
+  },
+  "How does CSV export of results work?": {
+    category: "Grading & Analytics",
+    title: "CSV Export of Test Grades",
+    techRef: "apps/api/src/routes/tests.routes.ts",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/api/src/routes/tests.routes.ts",
+    dbModel: "Attempt, User",
+    content: `
+      <p>Generates spreadsheet tables containing student emails, scores, durations, and pass/fail states.</p>
+      <div class="tech-card">
+        <h6>API endpoint:</h6>
+        <ul>
+          <li><strong>Route:</strong> <code>GET /api/tests/:id/export</code></li>
+          <li><strong>Processor:</strong> Stream-pipes database queries directly to CSV response headers.</li>
+        </ul>
+      </div>
+    `
+  },
+  "Describe the User Management section of the admin panel": {
+    category: "Admin Console",
+    title: "User Registry Control",
+    techRef: "apps/web/src/screens/AdminUsersPage.tsx",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/web/src/screens/AdminUsersPage.tsx",
+    dbModel: "User",
+    content: `
+      <p>Admin panel listing registered profiles with options to adjust user roles or toggle suspension flags.</p>
+      <div class="tech-card">
+        <h6>UI View:</h6>
+        <ul>
+          <li><strong>Screen:</strong> <a href="file:///c:/Users/14nir/Testing%20platform/quizforge/apps/web/src/screens/AdminUsersPage.tsx">AdminUsersPage.tsx</a></li>
+        </ul>
+      </div>
+    `
+  },
+  "Describe the Test Management section of the admin panel": {
+    category: "Admin Console",
+    title: "Platform-Wide Test Audit",
+    techRef: "apps/web/src/screens/AdminTestsPage.tsx",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/web/src/screens/AdminTestsPage.tsx",
+    dbModel: "Test",
+    content: `
+      <p>Allows system admins to inspect, search, flag, or force-archive tests uploaded by any creator account.</p>
+      <div class="tech-card">
+        <h6>UI View:</h6>
+        <ul>
+          <li><strong>Screen:</strong> <a href="file:///c:/Users/14nir/Testing%20platform/quizforge/apps/web/src/screens/AdminTestsPage.tsx">AdminTestsPage.tsx</a></li>
+        </ul>
+      </div>
+    `
+  },
+  "Describe the Exam Catalogue management in the admin panel": {
+    category: "Admin Console",
+    title: "Catalogue Curation Queue",
+    techRef: "apps/web/src/screens/AdminDashboardPage.tsx",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/web/src/screens/AdminDashboardPage.tsx",
+    dbModel: "Test, Catalog Listings",
+    content: `
+      <p>Moderation layout for review requests. Admin examines tests submitted for public catalog listings, approving or rejecting with remarks.</p>
+      <div class="tech-card">
+        <h6>Technical process:</h6>
+        <ul>
+          <li>Lists tests requesting visibility promotion. Updates status triggers.</li>
+        </ul>
+      </div>
+    `
+  },
+  "Describe the System Settings in the admin panel": {
+    category: "Admin Console",
+    title: "System settings panel",
+    techRef: "apps/web/src/screens/AdminDashboardPage.tsx",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/web/src/screens/AdminDashboardPage.tsx",
+    dbModel: "Global configurations schema",
+    content: `
+      <p>Configures global system properties such as size limits, maintenance indicators, and API rate thresholds.</p>
+      <div class="tech-card">
+        <h6>References:</h6>
+        <ul>
+          <li><strong>Service:</strong> Calls admin service file endpoints updating process settings.</li>
+        </ul>
+      </div>
+    `
+  },
+  "What does the pre-publish checklist validate?": {
+    category: "Test Builder",
+    title: "Pre-publish validation checklist",
+    techRef: "apps/api/src/services/test.service.ts",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/api/src/services/test.service.ts",
+    dbModel: "Test, Section, Question",
+    content: `
+      <p>A gate that runs structural checks before allowing a test to be published and made accessible to candidates.</p>
+      <div class="tech-card">
+        <h6>Validation Rules:</h6>
+        <ul>
+          <li><strong>Minimum questions:</strong> Each section must contain at least one question.</li>
+          <li><strong>Title required:</strong> <code>Test.title</code> must be non-empty.</li>
+          <li><strong>Duration set:</strong> <code>durationMins</code> must be greater than zero.</li>
+          <li><strong>Dates valid:</strong> <code>startsAt</code> must be before <code>endsAt</code> if both are set.</li>
+        </ul>
+      </div>
+      <h5>Outcome:</h5>
+      <p>Checklist shows green check marks for passing conditions and red warnings for missing items, blocking publish until all are resolved.</p>
+    `
+  },
+  "How does publishing a test work?": {
+    category: "Test Builder",
+    title: "Test publish flow",
+    techRef: "apps/api/src/services/test.service.ts",
+    techLink: "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/api/src/services/test.service.ts",
+    dbModel: "Test (status: PUBLISHED)",
+    content: `
+      <p>Transitions a draft test to live status, making it joinable via access code, direct link, or catalogue if listed.</p>
+      <div class="tech-card">
+        <h6>Backend Process:</h6>
+        <ul>
+          <li><strong>Route:</strong> <code>PUT /api/tests/:id/publish</code></li>
+          <li><strong>Service:</strong> <code>TestService.publishTest</code> sets <code>Test.status = PUBLISHED</code>.</li>
+          <li><strong>Access code:</strong> Auto-generates a unique 6-char code if not already set.</li>
+        </ul>
+      </div>
+      <h5>After publish:</h5>
+      <ul>
+        <li>Takers can join via the generated access code or direct link immediately.</li>
+        <li>Creator can no longer edit questions — only configuration toggles remain editable.</li>
+        <li>Test appears in the creator's Published tab on the dashboard.</li>
+      </ul>
+    `
+  }
+};
+
+// Main function triggered when clicking any node in the flow
+function sendPrompt(promptText) {
+  activePromptText = promptText;
+  
+  // Post message to parent frame in case there's an active chatbot agent listening
+  if (window.parent) {
+    window.parent.postMessage({ type: 'prompt', text: promptText }, '*');
+  }
+
+  // Resolve details
+  let details = customPrompts[promptText];
+  
+  if (!details) {
+    // Dynamic generator fallback to keep visualizer fully functional and rich
+    let category = "App Journey";
+    let title = promptText;
+    let techRef = "apps/api/src";
+    let techLink = "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/api/src";
+    let dbModel = "QuizForge Models";
+    let content = "";
+
+    if (promptText.includes("mock test")) {
+      category = "Exam Catalogue";
+      const exam = promptText.replace("Show the", "").replace("mock test structure and sections", "").replace("mock test structure", "").trim();
+      title = `${exam} Pattern`;
+      techRef = "apps/api/prisma/seed.ts";
+      techLink = "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/api/prisma/seed.ts";
+      dbModel = "Test, Section, Question";
+      content = `
+        <p>This layout outlines the official structure of the <strong>${exam}</strong> examination inside the database.</p>
+        <div class="tech-card">
+          <h6>Prisma Configuration:</h6>
+          <ul>
+            <li><strong>Model:</strong> <code>Test.accessCode</code> and <code>Test.accessLink</code> generated upon publishing.</li>
+            <li><strong>Structure:</strong> Multiple child <code>Section</code> records containing ordered <code>Question</code> nodes.</li>
+          </ul>
+        </div>
+        <h5>Official Mapping Parameters:</h5>
+        <ul>
+          <li>Correctly maps section counts, durations, and total marking values.</li>
+          <li>Allows creators to toggle global or per-section time limits.</li>
+          <li>Features option shuffling and negative score clamping.</li>
+        </ul>
+      `;
+    } else if (promptText.includes("editor work")) {
+      category = "Creator Tools";
+      const type = promptText.replace("How does the", "").replace("question editor work?", "").trim();
+      title = `${type} Question Editor`;
+      techRef = "packages/shared/src/schemas/question.schema.ts";
+      techLink = "file:///c:/Users/14nir/Testing%20platform/quizforge/packages/shared/src/schemas/question.schema.ts";
+      dbModel = "Question.questionData (JSON Schema)";
+      content = `
+        <p>Enables creators to configure <strong>${type}</strong> questions with customized evaluation rules.</p>
+        <div class="tech-card">
+          <h6>Zod Validation:</h6>
+          <ul>
+            <li><strong>Schema:</strong> <code>QuestionDataSchema</code> validates payload structure.</li>
+            <li><strong>API:</strong> Verified on endpoints via <code>validate(CreateQuestionInput)</code> middleware.</li>
+          </ul>
+        </div>
+        <h5>Editor Configuration:</h5>
+        <ul>
+          <li>Rich text body input support with HTML sanitization.</li>
+          <li>AWS S3 integration for attaching diagram images and files.</li>
+          <li>Score values, difficulty tags, and option definitions.</li>
+        </ul>
+      `;
+    } else if (promptText.includes("render for the taker")) {
+      category = "Taker Experience";
+      const type = promptText.replace("How does", "").replace("render for the taker?", "").trim();
+      title = `${type} Render View`;
+      techRef = "apps/web/src/screens/ExamPage.tsx";
+      techLink = "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/web/src/screens/ExamPage.tsx";
+      dbModel = "Answer.responseData (JSON Schema)";
+      content = `
+        <p>Defines how the candidate interacts with <strong>${type}</strong> questions in the Next.js frontend.</p>
+        <div class="tech-card">
+          <h6>Frontend Component:</h6>
+          <ul>
+            <li><strong>View:</strong> <a href="file:///c:/Users/14nir/Testing%20platform/quizforge/apps/web/src/screens/ExamPage.tsx">ExamPage.tsx</a></li>
+            <li><strong>State:</strong> Monitored using Zustand store hooks for offline resiliency.</li>
+          </ul>
+        </div>
+        <h5>User Experience:</h5>
+        <ul>
+          <li>Responsive and clear interface designed to prevent cognitive load.</li>
+          <li>Integrates key options and input controls directly into the question pane.</li>
+          <li>Automatic autosave payload generation sent to the Express API.</li>
+        </ul>
+      `;
+    } else if (promptText.includes("exams available") || promptText.includes("exams on the platform") || promptText.includes("Olympiad exams")) {
+      category = "Exam Catalogue";
+      title = promptText.replace("Show all", "").replace("available on the platform", "").replace("on the platform", "").trim();
+      title = title.charAt(0).toUpperCase() + title.slice(1) + " Categories";
+      techRef = "apps/api/prisma/seed.ts";
+      techLink = "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/api/prisma/seed.ts";
+      dbModel = "Test, Catalog Groups";
+      content = `
+        <p>Dynamic catalog group rendering registered courses and exams matching <strong>${title}</strong>.</p>
+        <div class="tech-card">
+          <h6>Prisma Seeding:</h6>
+          <ul>
+            <li><strong>Source:</strong> <a href="file:///c:/Users/14nir/Testing%20platform/quizforge/apps/api/prisma/seed.ts">seed.ts</a> populates default mock parameters.</li>
+            <li><strong>Model:</strong> Catalog links categorized by dynamic tags.</li>
+          </ul>
+        </div>
+        <h5>Catalogue features:</h5>
+        <ul>
+          <li>Enables self-enrollment gates for takers.</li>
+          <li>Interactive searches and tags filters grouping.</li>
+        </ul>
+      `;
+    } else if (promptText.includes("setting control") || promptText.includes("duration setting") || promptText.includes("file types") || promptText.includes("maintenance mode") || promptText.includes("institution management") || promptText.includes("platform-wide analytics")) {
+      category = "Admin Settings";
+      title = promptText.replace("What does", "").replace("setting control?", "").replace("setting control", "").replace("How does", "").replace("work in the admin panel?", "").replace("work in admin?", "").trim();
+      title = title.charAt(0).toUpperCase() + title.slice(1);
+      techRef = "apps/api/src/services/admin.service.ts";
+      techLink = "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/api/src/services/admin.service.ts";
+      dbModel = "Global Config Properties";
+      content = `
+        <p>This parameter defines platform limits or behaviors controlled by administrators to manage resources, billing levels, or security constraints.</p>
+        <div class="tech-card">
+          <h6>Admin Reference:</h6>
+          <ul>
+            <li><strong>Service:</strong> <a href="file:///c:/Users/14nir/Testing%20platform/quizforge/apps/api/src/services/admin.service.ts">admin.service.ts</a></li>
+            <li><strong>Prisma Model:</strong> Global system options stored in key-value config records.</li>
+          </ul>
+        </div>
+        <h5>Configuration details:</h5>
+        <p>Enforced across endpoints to maintain platform reliability, regulate API usage, and control file upload sizes.</p>
+      `;
+    } else if (promptText.includes("information is shown") || promptText.includes("marking scheme") || promptText.includes("instructions are shown")) {
+      category = "Gate Screen Details";
+      title = promptText.replace("What", "").replace("info is shown on the gate screen?", "").replace("information is shown in the", "").replace("info is shown?", "").trim();
+      title = title.charAt(0).toUpperCase() + title.slice(1);
+      techRef = "apps/web/src/screens/TestGatePage.tsx";
+      techLink = "file:///c:/Users/14nir/Testing%20platform/quizforge/apps/web/src/screens/TestGatePage.tsx";
+      dbModel = "Test Metadata Fields";
+      content = `
+        <p>Defines how the information is retrieved from the backend <code>Test</code> record and rendered on the gate instructions screen.</p>
+        <div class="tech-card">
+          <h6>Frontend View:</h6>
+          <ul>
+            <li><strong>File:</strong> <a href="file:///c:/Users/14nir/Testing%20platform/quizforge/apps/web/src/screens/TestGatePage.tsx">TestGatePage.tsx</a></li>
+            <li><strong>Verification:</strong> Enforces startsAt/endsAt ranges and checks if user is logged in before revealing start controls.</li>
+          </ul>
+        </div>
+      `;
+    } else {
+      title = promptText.replace("Describe the", "").replace("in detail", "").replace("How does", "").trim();
+      title = title.charAt(0).toUpperCase() + title.slice(1);
+      content = `
+        <p>This flow maps directly to the QuizForge product surface for: <strong>"${title}"</strong>.</p>
+        <div class="tech-card">
+          <h6>Technical Framework:</h6>
+          <ul>
+            <li><strong>Routes:</strong> Registered inside the Express API routes directory.</li>
+            <li><strong>Client:</strong> Handled by matching views in the Next.js NextConfig router.</li>
+          </ul>
+        </div>
+        <h5>Description:</h5>
+        <p>Provides critical support to ensure smooth data transitions across takers, creators, and platform managers.</p>
+      `;
+    }
+
+    details = { category, title, techRef, techLink, dbModel, content };
+  }
+
+  // Update drawer elements
+  document.getElementById('drawer-category').textContent = details.category;
+  document.getElementById('drawer-title').textContent = details.title;
+  
+  let html = details.content;
+  if (details.techRef) {
+    html += `
+      <div class="tech-card" style="margin-top: 16px;">
+        <h6>Monorepo Schema & File Details:</h6>
+        <ul>
+          <li><strong>File Reference:</strong> <a href="${details.techLink}">${details.techRef}</a></li>
+          <li><strong>Database Schema:</strong> <code>${details.dbModel}</code></li>
+        </ul>
+      </div>
+    `;
+  }
+  document.getElementById('drawer-content').innerHTML = html;
+
+  // Open Drawer
+  document.getElementById('drawer-overlay').classList.add('active');
+  document.getElementById('drawer').classList.add('active');
+}
+
+function closeDrawer() {
+  document.getElementById('drawer-overlay').classList.remove('active');
+  document.getElementById('drawer').classList.remove('active');
+}
+
+function triggerCopy() {
+  if (!activePromptText) return;
+  
+  navigator.clipboard.writeText(activePromptText).then(() => {
+    // Show Toast
+    const toast = document.getElementById('toast');
+    toast.classList.add('active');
+    setTimeout(() => {
+      toast.classList.remove('active');
+    }, 2500);
+  }).catch(err => {
+    console.error('Failed to copy text: ', err);
+  });
+}
+</script>
+
+</body>
+</html>
