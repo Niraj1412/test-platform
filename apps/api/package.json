@@ -2,7 +2,6 @@
   "name": "api",
   "version": "1.0.0",
   "private": true,
-  "type": "module",
   "main": "dist/server.js",
   "scripts": {
     "build": "prisma generate && tsc -p tsconfig.json",
