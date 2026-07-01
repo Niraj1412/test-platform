@@ -5,6 +5,7 @@
   "main": "dist/server.js",
   "scripts": {
     "build": "prisma generate && tsc -p tsconfig.json",
+    "postinstall": "prisma generate",
     "dev": "tsx watch src/server.ts",
     "lint": "eslint src test --ext .ts",
     "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand",
