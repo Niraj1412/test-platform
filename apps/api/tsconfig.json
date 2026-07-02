@@ -3,6 +3,11 @@
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": ".",
+    "baseUrl": ".",
+    "paths": {
+      "@quizforge/shared": ["../../packages/shared/src/index.ts"],
+      "@quizforge/shared/*": ["../../packages/shared/src/*"]
+    },
     "module": "CommonJS",
     "moduleResolution": "Node10",
     "ignoreDeprecations": "6.0",
