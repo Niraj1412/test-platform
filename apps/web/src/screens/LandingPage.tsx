@@ -176,7 +176,7 @@ export function LandingPage() {
                 A professional assessment platform engineered for clarity, rigor, and actionable insights. Design high-stakes evaluations with a low-noise interface that prioritizes focus.
               </p>
               <div className="flex flex-wrap gap-stack-md pt-stack-sm">
-                <Link href="/dashboard/tests/demo-test/build" className="flex h-[48px] items-center gap-2 rounded-lg bg-primary px-8 text-lg font-medium text-on-primary shadow-[0_1px_3px_rgba(0,0,0,0.08)] transition-colors hover:bg-surface-tint">
+                <Link href="/dashboard" className="flex h-[48px] items-center gap-2 rounded-lg bg-primary px-8 text-lg font-medium text-on-primary shadow-[0_1px_3px_rgba(0,0,0,0.08)] transition-colors hover:bg-surface-tint">
                   <span>Create a Test</span>
                   <MaterialIcon name="arrow_forward" className="text-[20px]" />
                 </Link>

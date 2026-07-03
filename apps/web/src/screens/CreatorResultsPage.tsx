@@ -66,7 +66,7 @@ export function CreatorResultsPage() {
                   <td className="px-6 py-4">{attempt.time}</td>
                   <td className="px-6 py-4">{attempt.started}</td>
                   <td className="px-6 py-4 text-right">
-                    <Button href={`/dashboard/tests/demo-test/results/${attempt.id}`} variant="secondary" icon={<Eye size={16} />}>
+                    <Button variant="secondary" icon={<Eye size={16} />} disabled>
                       View
                     </Button>
                   </td>

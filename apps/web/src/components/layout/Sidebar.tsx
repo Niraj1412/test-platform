@@ -6,13 +6,16 @@ import { MaterialIcon } from '../ui/MaterialIcon'
 import { cn } from '../../utils/cn'
 import { useAuthStore } from '../../stores/authStore'
 
-const items = [
+const navItems = [
   { to: '/dashboard', label: 'My Tests', icon: 'quiz' },
   { to: '/dashboard/question-bank', label: 'Question Bank', icon: 'database' },
   { to: '/dashboard/grading', label: 'Grading Queue', icon: 'rate_review' },
-  { to: '/dashboard/tests/demo-test/results', label: 'Results', icon: 'analytics' },
-  { to: '/dashboard/tests/demo-test/settings', label: 'Settings', icon: 'settings' },
   { to: '/exams', label: 'Exam Catalogue', icon: 'menu_book' },
+]
+
+const disabledItems = [
+  { label: 'Results', icon: 'analytics' },
+  { label: 'Settings', icon: 'settings' },
 ]
 
 export function Sidebar() {
@@ -42,7 +45,7 @@ export function Sidebar() {
         <p className="mt-1 text-xs text-on-surface-variant">Creator Studio</p>
       </div>
       <div className="flex flex-1 flex-col gap-1 px-stack-sm">
-        {items.map((item) => {
+        {navItems.map((item) => {
           const active = pathname === item.to || (item.to !== '/dashboard' && pathname.startsWith(item.to))
           return (
             <Link
@@ -60,6 +63,16 @@ export function Sidebar() {
             </Link>
           )
         })}
+        {disabledItems.map((item) => (
+          <span
+            key={item.label}
+            title="Open a test to access this section"
+            className="flex cursor-not-allowed items-center gap-3 rounded-lg px-stack-md py-3 text-on-surface-variant opacity-40 select-none"
+          >
+            <MaterialIcon name={item.icon} />
+            {item.label}
+          </span>
+        ))}
       </div>
       <div className="mt-auto border-t border-outline-variant px-stack-lg pt-4">
         <div className="flex items-center gap-3">

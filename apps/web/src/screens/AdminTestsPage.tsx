@@ -46,7 +46,7 @@ export function AdminTestsPage() {
                   <td className="px-6 py-4">{row.takers}</td>
                   <td className="px-6 py-4">
                     <div className="flex justify-end gap-2">
-                      <Button href="/dashboard/tests/demo-test/results" variant="secondary" icon={<Eye size={16} />}>
+                      <Button variant="secondary" icon={<Eye size={16} />} disabled>
                         View
                       </Button>
                       <Button variant="secondary" icon={<Archive size={16} />} onClick={() => setToast(`${row.name} archived in demo mode.`)}>
