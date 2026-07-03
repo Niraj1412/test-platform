@@ -18,9 +18,16 @@ app.use(
     contentSecurityPolicy: process.env.NODE_ENV === 'production' ? undefined : false
   })
 )
+const allowedOrigins = (process.env.WEB_ORIGIN ?? 'http://localhost:3000')
+  .split(',')
+  .map((o) => o.trim().replace(/\/$/, ''))
+
 app.use(
   cors({
-    origin: process.env.WEB_ORIGIN ?? 'http://localhost:3000',
+    origin: (origin, cb) => {
+      if (!origin || allowedOrigins.includes(origin)) return cb(null, true)
+      cb(new Error(`CORS: origin ${origin} not allowed`))
+    },
     credentials: true
   })
 )
