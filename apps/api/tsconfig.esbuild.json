@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@quizforge/shared": ["../../packages/shared/src/index.ts"],
+      "@quizforge/shared/*": ["../../packages/shared/src/*"]
+    }
+  }
+}
