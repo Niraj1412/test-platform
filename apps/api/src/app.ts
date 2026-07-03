@@ -51,3 +51,5 @@ app.use('/api', sectionsRouter)
 app.use('/api', questionsRouter)
 
 app.use(errorMiddleware)
+
+export default app
