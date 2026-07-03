@@ -4,7 +4,7 @@
   "private": true,
   "main": "dist/server.js",
   "scripts": {
-    "build": "prisma generate && tsc -p tsconfig.json",
+    "build": "pnpm --filter @quizforge/shared build && prisma generate && tsc -p tsconfig.json",
     "postinstall": "prisma generate",
     "vercel-build": "prisma generate && esbuild src/vercel-entry.ts --bundle --platform=node --format=cjs --target=node20 --tsconfig=tsconfig.esbuild.json --outfile=api/index.js --external:@prisma/client --external:@neondatabase/serverless --external:@prisma/adapter-neon",
     "dev": "tsx watch src/server.ts",
