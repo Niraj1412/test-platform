@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "next dev -H 0.0.0.0 -p 3000",
     "build": "next build",
+    "vercel-build": "pnpm --filter @quizforge/shared build && next build",
     "lint": "eslint .",
     "start": "next start -H 0.0.0.0 -p 3000"
   },
